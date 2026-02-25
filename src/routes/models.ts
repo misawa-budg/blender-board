@@ -1,7 +1,8 @@
 import { Router } from "express";
+import { mockModels } from "../mockObjects.js";
 
 const router = Router();
 
-router.get("/", (req, res) => res.send("This is the route '/models'"));
+router.get("/", (_req, res) => res.json({ items: mockModels }));
 
 export default router;
