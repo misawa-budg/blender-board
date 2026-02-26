@@ -4,13 +4,13 @@ const detailConfigMap = {
   images: {
     endpoint: "/api/images",
     listPath: "/images",
-    label: "Image",
+    label: "画像",
     fileAccept: ".png,.jpg,.jpeg,.webp,.gif",
   },
   models: {
     endpoint: "/api/models",
     listPath: "/models",
-    label: "Model",
+    label: "モデル",
     fileAccept: ".obj,.fbx,.blend,.glb,.gltf,.stl,.ply",
   },
 };
@@ -103,23 +103,23 @@ const showActionStatus = (message, type) => {
 };
 
 if (!pathMatch) {
-  showStatus("Invalid detail path.", "error");
-  throw new Error("Invalid detail path.");
+  showStatus("詳細ページのURLが不正です。", "error");
+  throw new Error("詳細ページのURLが不正です。");
 }
 
 const kind = pathMatch[1];
 const itemId = pathMatch[2];
 const config = detailConfigMap[kind];
 if (!config) {
-  showStatus("Invalid detail path.", "error");
-  throw new Error("Invalid detail config.");
+  showStatus("詳細ページの設定が不正です。", "error");
+  throw new Error("詳細ページの設定が不正です。");
 }
 
 if (detailHeadingElement instanceof HTMLElement) {
-  detailHeadingElement.textContent = `${config.label} Detail`;
+  detailHeadingElement.textContent = `${config.label}の詳細`;
 }
 if (detailDescriptionElement instanceof HTMLElement) {
-  detailDescriptionElement.textContent = `View metadata and download this ${config.label.toLowerCase()}.`;
+  detailDescriptionElement.textContent = `${config.label}のメタデータ確認とダウンロードができます。`;
 }
 if (backLinkElement instanceof HTMLAnchorElement) {
   backLinkElement.href = config.listPath;
@@ -156,11 +156,11 @@ const closeDeleteConfirm = (confirmed) => {
 const requestDeleteConfirmation = () => {
   if (!(deleteConfirmOverlayElement instanceof HTMLElement)) {
     return Promise.resolve(
-      window.confirm(`Delete this ${config.label.toLowerCase()}? This cannot be undone.`)
+      window.confirm(`この${config.label}を削除しますか？この操作は取り消せません。`)
     );
   }
   if (deleteConfirmMessageElement instanceof HTMLElement) {
-    deleteConfirmMessageElement.textContent = `Delete this ${config.label.toLowerCase()}? This action cannot be undone.`;
+    deleteConfirmMessageElement.textContent = `この${config.label}を削除しますか？この操作は取り消せません。`;
   }
 
   deleteConfirmOverlayElement.classList.remove("hidden");
@@ -170,11 +170,11 @@ const requestDeleteConfirmation = () => {
 };
 
 const loadItem = async () => {
-  showStatus("Loading...", "success");
+  showStatus("読み込み中...", "success");
   try {
     const response = await fetch(`${config.endpoint}/${itemId}`);
     if (!response.ok) {
-      let errorMessage = `Failed to load item: ${response.status}`;
+      let errorMessage = `詳細の取得に失敗しました: ${response.status}`;
       try {
         const errorPayload = await response.json();
         if (errorPayload && typeof errorPayload.error === "string") {
@@ -189,7 +189,7 @@ const loadItem = async () => {
     const payload = await response.json();
     const item = payload && typeof payload === "object" ? payload.item : null;
     if (!item || typeof item !== "object") {
-      throw new Error("Invalid detail response.");
+      throw new Error("詳細レスポンスが不正です。");
     }
 
     if (itemTitleElement instanceof HTMLElement) {
@@ -238,7 +238,7 @@ const loadItem = async () => {
 
     hideStatus();
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to load detail.";
+    const message = error instanceof Error ? error.message : "詳細の取得に失敗しました。";
     showStatus(message, "error");
   }
 };
@@ -259,11 +259,11 @@ if (
         : undefined;
 
     if (title === "") {
-      showActionStatus("Title is required.", "error");
+      showActionStatus("タイトルは必須です。", "error");
       return;
     }
     if (author === "") {
-      showActionStatus("Author is required.", "error");
+      showActionStatus("投稿者は必須です。", "error");
       return;
     }
     const hasReplacementFile = replacementFile instanceof File;
@@ -272,7 +272,7 @@ if (
       title === originalItemState.title &&
       author === originalItemState.author;
     if (isSameAsOriginal && !hasReplacementFile) {
-      showActionStatus("No changes to save.", "error");
+      showActionStatus("変更内容がありません。", "error");
       return;
     }
 
@@ -284,7 +284,7 @@ if (
     }
 
     setActionPending(true);
-    showActionStatus("Saving...", "success");
+    showActionStatus("保存中...", "success");
 
     try {
       const response = await fetch(`${config.endpoint}/${itemId}`, {
@@ -292,7 +292,7 @@ if (
         body: formData,
       });
       if (!response.ok) {
-        let errorMessage = `Save failed: ${response.status}`;
+        let errorMessage = `保存に失敗しました: ${response.status}`;
         try {
           const errorPayload = await response.json();
           if (errorPayload && typeof errorPayload.error === "string") {
@@ -304,10 +304,10 @@ if (
         throw new Error(errorMessage);
       }
 
-      showActionStatus("Saved.", "success");
+      showActionStatus("保存しました。", "success");
       await loadItem();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Save failed.";
+      const message = error instanceof Error ? error.message : "保存に失敗しました。";
       showActionStatus(message, "error");
     } finally {
       setActionPending(false);
@@ -323,14 +323,14 @@ if (deleteButtonElement instanceof HTMLButtonElement) {
     }
 
     setActionPending(true);
-    showActionStatus("Deleting...", "success");
+    showActionStatus("削除中...", "success");
 
     try {
       const response = await fetch(`${config.endpoint}/${itemId}`, {
         method: "DELETE",
       });
       if (!response.ok) {
-        let errorMessage = `Delete failed: ${response.status}`;
+        let errorMessage = `削除に失敗しました: ${response.status}`;
         try {
           const errorPayload = await response.json();
           if (errorPayload && typeof errorPayload.error === "string") {
@@ -344,7 +344,7 @@ if (deleteButtonElement instanceof HTMLButtonElement) {
 
       window.location.assign(config.listPath);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Delete failed.";
+      const message = error instanceof Error ? error.message : "削除に失敗しました。";
       showActionStatus(message, "error");
       setActionPending(false);
     }

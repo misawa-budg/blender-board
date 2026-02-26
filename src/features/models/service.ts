@@ -101,7 +101,7 @@ export const createModel = (input: CreateModelInput): Model => {
   const modelId = Number(insertResult.lastInsertRowid);
   const createdModel = findModelById(modelId);
   if (!createdModel) {
-    throw new Error("Failed to create model.");
+    throw new Error("モデルの作成に失敗しました。");
   }
 
   return createdModel;

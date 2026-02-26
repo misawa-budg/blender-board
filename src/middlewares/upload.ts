@@ -38,7 +38,12 @@ const createUploadMiddleware = (rule: UploadRule) => {
     fileFilter: (_req, file, callback) => {
       const extension = extname(file.originalname).toLowerCase();
       if (!rule.allowedExtensions.includes(extension)) {
-        callback(createHttpError(400, `Unsupported file extension: ${extension || "(none)"}`));
+        callback(
+          createHttpError(
+            400,
+            `未対応の拡張子です: ${extension || "(拡張子なし)"}`
+          )
+        );
         return;
       }
 

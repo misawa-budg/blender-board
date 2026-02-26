@@ -5,7 +5,7 @@ const router = Router();
 router.get("/", (_req, res) => {
   return res.type("html").send(`
 <!doctype html>
-<html lang="en">
+<html lang="ja">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,12 +14,12 @@ router.get("/", (_req, res) => {
   <body>
     <main>
       <h1>Blender Board</h1>
-      <p>Choose a gallery:</p>
+      <p>表示する一覧を選択してください。</p>
       <ul>
-        <li><a href="/images">Images</a></li>
-        <li><a href="/models">Models</a></li>
+        <li><a href="/images">画像</a></li>
+        <li><a href="/models">モデル</a></li>
       </ul>
-      <p>API base: <code>/api/images</code> and <code>/api/models</code></p>
+      <p>APIベース: <code>/api/images</code> と <code>/api/models</code></p>
     </main>
   </body>
 </html>

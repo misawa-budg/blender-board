@@ -101,7 +101,7 @@ export const createImage = (input: CreateImageInput): Image => {
   const imageId = Number(insertResult.lastInsertRowid);
   const createdImage = findImageById(imageId);
   if (!createdImage) {
-    throw new Error("Failed to create image.");
+    throw new Error("画像の作成に失敗しました。");
   }
 
   return createdImage;

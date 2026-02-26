@@ -35,7 +35,7 @@ export const parsePositiveInt = (value: string): number | null => {
 
 export const validateListQuery = (value: unknown): ValidationResult<ListQueryOptions> => {
   if (typeof value !== "object" || value === null) {
-    return { ok: false, message: "Query must be an object." };
+    return { ok: false, message: "クエリはオブジェクトで指定してください。" };
   }
 
   const candidate = value as Record<string, unknown>;
@@ -50,12 +50,12 @@ export const validateListQuery = (value: unknown): ValidationResult<ListQueryOpt
 
   if (candidate.limit !== undefined) {
     if (typeof candidate.limit !== "string") {
-      return { ok: false, message: "limit must be a positive integer." };
+      return { ok: false, message: "limitは正の整数で指定してください。" };
     }
 
     const parsedLimit = parsePositiveInt(candidate.limit);
     if (parsedLimit === null || parsedLimit > 100) {
-      return { ok: false, message: "limit must be between 1 and 100." };
+      return { ok: false, message: "limitは1から100の範囲で指定してください。" };
     }
 
     options.limit = parsedLimit;
@@ -68,7 +68,7 @@ export const validateCreateMediaInput = (
   value: unknown
 ): ValidationResult<MediaCreateInput> => {
   if (typeof value !== "object" || value === null) {
-    return { ok: false, message: "Request body must be an object." };
+    return { ok: false, message: "リクエストボディはオブジェクトで指定してください。" };
   }
 
   const candidate = value as Record<string, unknown>;
@@ -76,11 +76,11 @@ export const validateCreateMediaInput = (
   const author = candidate.author;
 
   if (typeof title !== "string" || title.trim() === "") {
-    return { ok: false, message: "title is required and must be a non-empty string." };
+    return { ok: false, message: "titleは必須で、空でない文字列で指定してください。" };
   }
 
   if (typeof author !== "string" || author.trim() === "") {
-    return { ok: false, message: "author is required and must be a non-empty string." };
+    return { ok: false, message: "authorは必須で、空でない文字列で指定してください。" };
   }
 
   return {
@@ -99,7 +99,7 @@ export const validateUpdateMediaInput = (
   const requireAtLeastOne = options.requireAtLeastOne ?? true;
 
   if (typeof value !== "object" || value === null) {
-    return { ok: false, message: "Request body must be an object." };
+    return { ok: false, message: "リクエストボディはオブジェクトで指定してください。" };
   }
 
   const candidate = value as Record<string, unknown>;
@@ -107,20 +107,20 @@ export const validateUpdateMediaInput = (
 
   if (candidate.title !== undefined) {
     if (typeof candidate.title !== "string" || candidate.title.trim() === "") {
-      return { ok: false, message: "title must be a non-empty string when provided." };
+      return { ok: false, message: "titleを指定する場合は空でない文字列にしてください。" };
     }
     result.title = candidate.title.trim();
   }
 
   if (candidate.author !== undefined) {
     if (typeof candidate.author !== "string" || candidate.author.trim() === "") {
-      return { ok: false, message: "author must be a non-empty string when provided." };
+      return { ok: false, message: "authorを指定する場合は空でない文字列にしてください。" };
     }
     result.author = candidate.author.trim();
   }
 
   if (requireAtLeastOne && Object.keys(result).length === 0) {
-    return { ok: false, message: "At least one of title or author is required." };
+    return { ok: false, message: "titleまたはauthorのいずれかを指定してください。" };
   }
 
   return { ok: true, value: result };

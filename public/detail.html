@@ -1,23 +1,23 @@
 <!doctype html>
-<html lang="en">
+<html lang="ja">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Blender Board | Detail</title>
+    <title>Blender Board | 詳細</title>
     <link rel="stylesheet" href="/styles/board.css" />
   </head>
   <body>
     <div class="page">
       <header class="hero">
         <p class="eyebrow">Blender Board</p>
-        <h1 id="detail-heading">Detail</h1>
+        <h1 id="detail-heading">詳細</h1>
         <p id="detail-description" class="description"></p>
       </header>
 
       <main>
-        <nav class="tabs" aria-label="Gallery tabs">
-          <a id="tab-images" class="tab-link" href="/images">Images</a>
-          <a id="tab-models" class="tab-link" href="/models">Models</a>
+        <nav class="tabs" aria-label="ギャラリータブ">
+          <a id="tab-images" class="tab-link" href="/images">画像</a>
+          <a id="tab-models" class="tab-link" href="/models">モデル</a>
         </nav>
 
         <section class="detail-panel">
@@ -29,43 +29,43 @@
             <dl class="detail-grid">
               <dt>ID</dt>
               <dd id="item-id"></dd>
-              <dt>Author</dt>
+              <dt>投稿者</dt>
               <dd id="item-author"></dd>
-              <dt>Created</dt>
+              <dt>作成日時</dt>
               <dd id="item-created"></dd>
-              <dt>Original Name</dt>
+              <dt>元ファイル名</dt>
               <dd id="item-original-name"></dd>
-              <dt>MIME Type</dt>
+              <dt>MIMEタイプ</dt>
               <dd id="item-mime-type"></dd>
-              <dt>File Size</dt>
+              <dt>ファイルサイズ</dt>
               <dd id="item-file-size"></dd>
             </dl>
 
             <div class="detail-actions">
-              <a id="download-link" class="download-link" href="#">Download</a>
-              <a id="back-link" class="tab-link" href="/images">Back to list</a>
+              <a id="download-link" class="download-link" href="#">ダウンロード</a>
+              <a id="back-link" class="tab-link" href="/images">一覧へ戻る</a>
             </div>
 
             <section class="detail-edit">
-              <h3>Edit</h3>
+              <h3>編集</h3>
               <form id="edit-form" class="upload-form" enctype="multipart/form-data">
                 <div class="form-grid">
                   <label class="field">
-                    <span>Title</span>
+                    <span>タイトル</span>
                     <input id="edit-title" name="title" type="text" maxlength="120" required />
                   </label>
                   <label class="field">
-                    <span>Author</span>
+                    <span>投稿者</span>
                     <input id="edit-author" name="author" type="text" maxlength="120" required />
                   </label>
                   <label class="field field-file">
-                    <span>Replace file (optional)</span>
+                    <span>ファイル差し替え（任意）</span>
                     <input id="edit-file" name="file" type="file" />
                   </label>
                 </div>
                 <div class="detail-edit-actions">
-                  <button id="save-button" type="submit">Save</button>
-                  <button id="delete-button" class="danger-button" type="button">Delete</button>
+                  <button id="save-button" type="submit">保存</button>
+                  <button id="delete-button" class="danger-button" type="button">削除</button>
                 </div>
               </form>
             </section>
@@ -76,11 +76,11 @@
 
     <div id="delete-confirm-overlay" class="confirm-overlay hidden" role="dialog" aria-modal="true">
       <div class="confirm-card">
-        <h2 class="confirm-title">Delete Post</h2>
+        <h2 class="confirm-title">投稿の削除</h2>
         <p id="delete-confirm-message" class="confirm-message"></p>
         <div class="confirm-actions">
-          <button id="delete-cancel-button" type="button">Cancel</button>
-          <button id="delete-confirm-button" class="danger-button" type="button">Delete</button>
+          <button id="delete-cancel-button" type="button">キャンセル</button>
+          <button id="delete-confirm-button" class="danger-button" type="button">削除する</button>
         </div>
       </div>
     </div>

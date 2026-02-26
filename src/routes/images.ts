@@ -58,12 +58,12 @@ router.get("/", (req, res) => {
 router.get("/:id", (req, res) => {
   const imageId = parsePositiveInt(req.params.id);
   if (imageId === null) {
-    throw createHttpError(400, "id must be a positive integer.");
+    throw createHttpError(400, "idは正の整数で指定してください。");
   }
 
   const image = findImageById(imageId);
   if (!image) {
-    throw createHttpError(404, "Image not found.");
+    throw createHttpError(404, "画像が見つかりません。");
   }
 
   return res.json({ item: toImageListItemResponse(image) });
@@ -76,7 +76,7 @@ router.post("/", uploadImageFile, (req, res) => {
   }
 
   if (!req.file) {
-    throw createHttpError(400, "file is required.");
+    throw createHttpError(400, "fileは必須です。");
   }
 
   let createdImage;
@@ -105,7 +105,7 @@ router.patch("/:id", uploadImageFile, (req, res) => {
     if (req.file && existsSync(req.file.path)) {
       unlinkSync(req.file.path);
     }
-    throw createHttpError(400, "id must be a positive integer.");
+    throw createHttpError(400, "idは正の整数で指定してください。");
   }
 
   const imageId = parsePositiveInt(imageIdParam);
@@ -113,7 +113,7 @@ router.patch("/:id", uploadImageFile, (req, res) => {
     if (req.file && existsSync(req.file.path)) {
       unlinkSync(req.file.path);
     }
-    throw createHttpError(400, "id must be a positive integer.");
+    throw createHttpError(400, "idは正の整数で指定してください。");
   }
 
   const validationResult = validateUpdateMediaInput(req.body as unknown, {
@@ -165,7 +165,7 @@ router.patch("/:id", uploadImageFile, (req, res) => {
     if (req.file && existsSync(req.file.path)) {
       unlinkSync(req.file.path);
     }
-    throw createHttpError(404, "Image not found.");
+    throw createHttpError(404, "画像が見つかりません。");
   }
 
   return res.json({ item: toImageListItemResponse(updatedImage) });
@@ -174,14 +174,14 @@ router.patch("/:id", uploadImageFile, (req, res) => {
 router.delete("/:id", (req, res) => {
   const imageId = parsePositiveInt(req.params.id);
   if (imageId === null) {
-    throw createHttpError(400, "id must be a positive integer.");
+    throw createHttpError(400, "idは正の整数で指定してください。");
   }
 
   const deleted = deleteImageWithHook(imageId, (image) => {
     deleteStoredFile("images", image.storedPath, { ignoreMissing: true });
   });
   if (!deleted) {
-    throw createHttpError(404, "Image not found.");
+    throw createHttpError(404, "画像が見つかりません。");
   }
 
   return res.status(204).send();
@@ -190,17 +190,17 @@ router.delete("/:id", (req, res) => {
 router.get("/:id/download", (req, res) => {
   const imageId = parsePositiveInt(req.params.id);
   if (imageId === null) {
-    throw createHttpError(400, "id must be a positive integer.");
+    throw createHttpError(400, "idは正の整数で指定してください。");
   }
 
   const image = findImageById(imageId);
   if (!image) {
-    throw createHttpError(404, "Image not found.");
+    throw createHttpError(404, "画像が見つかりません。");
   }
 
   const absoluteFilePath = resolveStoredFilePath("images", image.storedPath);
   if (!existsSync(absoluteFilePath)) {
-    throw createHttpError(404, "Stored image file not found.");
+    throw createHttpError(404, "保存済み画像ファイルが見つかりません。");
   }
 
   return res.download(absoluteFilePath, image.originalName);

@@ -58,12 +58,12 @@ router.get("/", (req, res) => {
 router.get("/:id", (req, res) => {
   const modelId = parsePositiveInt(req.params.id);
   if (modelId === null) {
-    throw createHttpError(400, "id must be a positive integer.");
+    throw createHttpError(400, "idは正の整数で指定してください。");
   }
 
   const model = findModelById(modelId);
   if (!model) {
-    throw createHttpError(404, "Model not found.");
+    throw createHttpError(404, "モデルが見つかりません。");
   }
 
   return res.json({ item: toModelListItemResponse(model) });
@@ -76,7 +76,7 @@ router.post("/", uploadModelFile, (req, res) => {
   }
 
   if (!req.file) {
-    throw createHttpError(400, "file is required.");
+    throw createHttpError(400, "fileは必須です。");
   }
 
   let createdModel;
@@ -105,7 +105,7 @@ router.patch("/:id", uploadModelFile, (req, res) => {
     if (req.file && existsSync(req.file.path)) {
       unlinkSync(req.file.path);
     }
-    throw createHttpError(400, "id must be a positive integer.");
+    throw createHttpError(400, "idは正の整数で指定してください。");
   }
 
   const modelId = parsePositiveInt(modelIdParam);
@@ -113,7 +113,7 @@ router.patch("/:id", uploadModelFile, (req, res) => {
     if (req.file && existsSync(req.file.path)) {
       unlinkSync(req.file.path);
     }
-    throw createHttpError(400, "id must be a positive integer.");
+    throw createHttpError(400, "idは正の整数で指定してください。");
   }
 
   const validationResult = validateUpdateMediaInput(req.body as unknown, {
@@ -165,7 +165,7 @@ router.patch("/:id", uploadModelFile, (req, res) => {
     if (req.file && existsSync(req.file.path)) {
       unlinkSync(req.file.path);
     }
-    throw createHttpError(404, "Model not found.");
+    throw createHttpError(404, "モデルが見つかりません。");
   }
 
   return res.json({ item: toModelListItemResponse(updatedModel) });
@@ -174,14 +174,14 @@ router.patch("/:id", uploadModelFile, (req, res) => {
 router.delete("/:id", (req, res) => {
   const modelId = parsePositiveInt(req.params.id);
   if (modelId === null) {
-    throw createHttpError(400, "id must be a positive integer.");
+    throw createHttpError(400, "idは正の整数で指定してください。");
   }
 
   const deleted = deleteModelWithHook(modelId, (model) => {
     deleteStoredFile("models", model.storedPath, { ignoreMissing: true });
   });
   if (!deleted) {
-    throw createHttpError(404, "Model not found.");
+    throw createHttpError(404, "モデルが見つかりません。");
   }
 
   return res.status(204).send();
@@ -190,17 +190,17 @@ router.delete("/:id", (req, res) => {
 router.get("/:id/download", (req, res) => {
   const modelId = parsePositiveInt(req.params.id);
   if (modelId === null) {
-    throw createHttpError(400, "id must be a positive integer.");
+    throw createHttpError(400, "idは正の整数で指定してください。");
   }
 
   const model = findModelById(modelId);
   if (!model) {
-    throw createHttpError(404, "Model not found.");
+    throw createHttpError(404, "モデルが見つかりません。");
   }
 
   const absoluteFilePath = resolveStoredFilePath("models", model.storedPath);
   if (!existsSync(absoluteFilePath)) {
-    throw createHttpError(404, "Stored model file not found.");
+    throw createHttpError(404, "保存済みモデルファイルが見つかりません。");
   }
 
   return res.download(absoluteFilePath, model.originalName);

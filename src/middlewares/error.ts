@@ -3,7 +3,7 @@ import { MulterError } from "multer";
 import { createHttpError, isHttpError } from "../utils/httpError.js";
 
 export const notFoundHandler: RequestHandler = (_req, _res, next) => {
-  next(createHttpError(404, "Route not found."));
+  next(createHttpError(404, "ルートが見つかりません。"));
 };
 
 export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
@@ -13,11 +13,11 @@ export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
 
   if (error instanceof MulterError) {
     if (error.code === "LIMIT_FILE_SIZE") {
-      return res.status(413).json({ error: "Uploaded file is too large." });
+      return res.status(413).json({ error: "アップロードファイルのサイズが大きすぎます。" });
     }
     return res.status(400).json({ error: error.message });
   }
 
   console.error(error);
-  return res.status(500).json({ error: "Internal Server Error" });
+  return res.status(500).json({ error: "サーバー内部エラーが発生しました。" });
 };

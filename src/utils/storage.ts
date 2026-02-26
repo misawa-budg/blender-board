@@ -25,7 +25,7 @@ export const resolveStoredFilePath = (kind: MediaKind, storedPath: string): stri
   const normalizedBasePath = `${basePath}${basePath.endsWith(sep) ? "" : sep}`;
 
   if (!absolutePath.startsWith(normalizedBasePath)) {
-    throw createHttpError(400, "Invalid stored file path.");
+    throw createHttpError(400, "保存ファイルパスが不正です。");
   }
 
   return absolutePath;
@@ -50,7 +50,7 @@ export const deleteStoredFile = (
     if (options.ignoreMissing) {
       return;
     }
-    throw createHttpError(404, "Stored file not found.");
+    throw createHttpError(404, "保存ファイルが見つかりません。");
   }
 
   unlinkSync(targetPath);

@@ -3,19 +3,19 @@ const bodyKind = document.body.dataset.kind;
 const galleryConfig = {
   images: {
     endpoint: "/api/images",
-    label: "Image",
+    label: "画像",
     detailPrefix: "/images",
   },
   models: {
     endpoint: "/api/models",
-    label: "Model",
+    label: "モデル",
     detailPrefix: "/models",
   },
 };
 
 const config = bodyKind ? galleryConfig[bodyKind] : undefined;
 if (!config) {
-  throw new Error("Invalid gallery page config.");
+  throw new Error("ギャラリーページ設定が不正です。");
 }
 
 const gridElement = document.getElementById("items-grid");
@@ -45,21 +45,21 @@ const escapeHtml = (value) => {
 const renderCard = (item) => {
   const detailUrl = `${config.detailPrefix}/${item.id}`;
   return `
-    <article class="card card-clickable" data-detail-url="${detailUrl}" tabindex="0" role="link" aria-label="Open detail: ${escapeHtml(item.title)}">
+    <article class="card card-clickable" data-detail-url="${detailUrl}" tabindex="0" role="link" aria-label="詳細を開く: ${escapeHtml(item.title)}">
       <h3 class="card-title">${escapeHtml(item.title)}</h3>
       <p class="meta">${config.label}</p>
-      <p class="meta">by ${escapeHtml(item.author)}</p>
+      <p class="meta">投稿者: ${escapeHtml(item.author)}</p>
       <p class="meta">${formatDate(item.createdAt)}</p>
       <p class="meta">${escapeHtml(item.originalName)}</p>
       <div class="card-actions">
-        <a class="download-link" href="${item.downloadUrl}">Download</a>
+        <a class="download-link" href="${item.downloadUrl}">ダウンロード</a>
       </div>
     </article>
   `;
 };
 
 const renderItems = (items) => {
-  countElement.textContent = `${items.length} items`;
+  countElement.textContent = `${items.length} 件`;
   if (items.length === 0) {
     gridElement.innerHTML = "";
     emptyElement.classList.remove("hidden");
@@ -71,7 +71,7 @@ const renderItems = (items) => {
 };
 
 const renderError = (message) => {
-  countElement.textContent = "error";
+  countElement.textContent = "エラー";
   emptyElement.classList.remove("hidden");
   emptyElement.textContent = message;
   gridElement.innerHTML = "";
@@ -99,14 +99,14 @@ const loadItems = async () => {
   try {
     const response = await fetch(`${config.endpoint}?limit=36`);
     if (!response.ok) {
-      throw new Error(`Failed to load items: ${response.status}`);
+      throw new Error(`一覧の取得に失敗しました: ${response.status}`);
     }
 
     const payload = await response.json();
     const items = Array.isArray(payload.items) ? payload.items : [];
     renderItems(items);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to load items.";
+    const message = error instanceof Error ? error.message : "一覧の取得に失敗しました。";
     renderError(message);
   }
 };
@@ -165,20 +165,20 @@ if (
     const file = formData.get("file");
 
     if (typeof title !== "string" || title.trim() === "") {
-      setFormStatus("Title is required.", "error");
+      setFormStatus("タイトルは必須です。", "error");
       return;
     }
     if (typeof author !== "string" || author.trim() === "") {
-      setFormStatus("Author is required.", "error");
+      setFormStatus("投稿者は必須です。", "error");
       return;
     }
     if (!(file instanceof File) || file.size === 0) {
-      setFormStatus("File is required.", "error");
+      setFormStatus("ファイルは必須です。", "error");
       return;
     }
 
     submitButtonElement.disabled = true;
-    setFormStatus("Uploading...", "success");
+    setFormStatus("アップロード中...", "success");
 
     try {
       const response = await fetch(config.endpoint, {
@@ -187,7 +187,7 @@ if (
       });
 
       if (!response.ok) {
-        let errorMessage = `Upload failed: ${response.status}`;
+        let errorMessage = `アップロードに失敗しました: ${response.status}`;
         try {
           const payload = await response.json();
           if (payload && typeof payload.error === "string") {
@@ -200,10 +200,10 @@ if (
       }
 
       uploadFormElement.reset();
-      setFormStatus("Upload completed.", "success");
+      setFormStatus("投稿が完了しました。", "success");
       await loadItems();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Upload failed.";
+      const message = error instanceof Error ? error.message : "アップロードに失敗しました。";
       setFormStatus(message, "error");
     } finally {
       submitButtonElement.disabled = false;
