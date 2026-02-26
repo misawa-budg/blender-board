@@ -18,6 +18,8 @@ const detailConfigMap = {
 const detailStatusElement = document.getElementById("detail-status");
 const actionStatusElement = document.getElementById("action-status");
 const detailCardElement = document.getElementById("detail-card");
+const detailPreviewElement = document.getElementById("detail-preview");
+const detailPreviewImageElement = document.getElementById("detail-preview-image");
 const detailHeadingElement = document.getElementById("detail-heading");
 const detailDescriptionElement = document.getElementById("detail-description");
 const backLinkElement = document.getElementById("back-link");
@@ -218,6 +220,20 @@ const loadItem = async () => {
     if (downloadLinkElement instanceof HTMLAnchorElement) {
       const downloadUrl = typeof item.downloadUrl === "string" ? item.downloadUrl : "#";
       downloadLinkElement.href = downloadUrl;
+    }
+    if (
+      detailPreviewElement instanceof HTMLElement &&
+      detailPreviewImageElement instanceof HTMLImageElement
+    ) {
+      if (kind === "images" && typeof item.previewUrl === "string") {
+        detailPreviewImageElement.src = item.previewUrl;
+        detailPreviewImageElement.alt =
+          typeof item.title === "string" ? `${item.title} のプレビュー` : "画像プレビュー";
+        detailPreviewElement.classList.remove("hidden");
+      } else {
+        detailPreviewImageElement.src = "";
+        detailPreviewElement.classList.add("hidden");
+      }
     }
     if (editTitleElement instanceof HTMLInputElement) {
       editTitleElement.value = typeof item.title === "string" ? item.title : "";

@@ -30,6 +30,7 @@ type ImageListItemResponse = {
   originalName: string;
   mimeType: string;
   fileSize: number;
+  previewUrl: string;
   downloadUrl: string;
 };
 
@@ -42,6 +43,7 @@ const toImageListItemResponse = (image: Image): ImageListItemResponse => {
     originalName: image.originalName,
     mimeType: image.mimeType,
     fileSize: image.fileSize,
+    previewUrl: `/api/images/${image.id}/preview`,
     downloadUrl: `/api/images/${image.id}/download`,
   };
 };
@@ -232,6 +234,27 @@ router.get("/:id/download", (req, res) => {
   }
 
   return res.download(absoluteFilePath, image.originalName);
+});
+
+router.get("/:id/preview", (req, res) => {
+  const imageId = parsePositiveInt(req.params.id);
+  if (imageId === null) {
+    throw createHttpError(400, "idは正の整数で指定してください。");
+  }
+
+  const image = findImageById(imageId);
+  if (!image) {
+    throw createHttpError(404, "画像が見つかりません。");
+  }
+
+  const absoluteFilePath = resolveStoredFilePath("images", image.storedPath);
+  if (!existsSync(absoluteFilePath)) {
+    throw createHttpError(404, "保存済み画像ファイルが見つかりません。");
+  }
+
+  res.type(image.mimeType);
+  res.setHeader("Content-Disposition", "inline");
+  return res.sendFile(absoluteFilePath);
 });
 
 export default router;

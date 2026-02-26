@@ -5,11 +5,13 @@ const galleryConfig = {
     endpoint: "/api/images",
     label: "画像",
     detailPrefix: "/images",
+    showImagePreview: true,
   },
   models: {
     endpoint: "/api/models",
     label: "モデル",
     detailPrefix: "/models",
+    showImagePreview: false,
   },
 };
 
@@ -44,8 +46,17 @@ const escapeHtml = (value) => {
 
 const renderCard = (item) => {
   const detailUrl = `${config.detailPrefix}/${item.id}`;
+  const previewHtml =
+    config.showImagePreview && typeof item.previewUrl === "string"
+      ? `
+      <div class="card-preview">
+        <img class="card-preview-image" src="${item.previewUrl}" alt="${escapeHtml(item.title)} のプレビュー" loading="lazy" decoding="async" />
+      </div>
+    `
+      : "";
   return `
     <article class="card card-clickable" data-detail-url="${detailUrl}" tabindex="0" role="link" aria-label="詳細を開く: ${escapeHtml(item.title)}">
+      ${previewHtml}
       <h3 class="card-title">${escapeHtml(item.title)}</h3>
       <p class="meta">${config.label}</p>
       <p class="meta">投稿者: ${escapeHtml(item.author)}</p>

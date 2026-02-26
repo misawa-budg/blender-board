@@ -288,6 +288,7 @@ const openApiDocument = {
           originalName: { type: "string" },
           mimeType: { type: "string" },
           fileSize: { type: "integer" },
+          previewUrl: { type: "string" },
           downloadUrl: { type: "string" },
         },
       },
