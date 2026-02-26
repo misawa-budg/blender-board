@@ -329,6 +329,37 @@ body {
   font-size: 0.9rem;
 }
 
+.pagination {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+}
+
+.pagination button {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  padding: 0.48rem 0.85rem;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  min-width: 7.2rem;
+  text-align: center;
+}
+
 .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
@@ -612,5 +643,18 @@ body {
 @media (max-width: 640px) {
   .detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .pagination {
+    justify-content: stretch;
+  }
+
+  .pagination button {
+    flex: 1;
+  }
+
+  .pagination-info {
+    min-width: auto;
+    width: 100%;
   }
 }
