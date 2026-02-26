@@ -6,3 +6,8 @@
 - [x] Implement multipart upload for `POST /models`
 - [x] Secure download path handling (`/:id/download`)
 - [x] Verify with build and endpoint smoke tests
+
+## Additional Tasks
+
+- [x] Support file re-upload on `PATCH /images` and `PATCH /models`
+- [x] Keep DB/file consistency stronger on replace and delete flows
