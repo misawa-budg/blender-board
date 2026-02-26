@@ -36,7 +36,16 @@ export const deleteStoredFile = (
   storedPath: string,
   options: { ignoreMissing?: boolean } = {}
 ): void => {
-  const targetPath = resolveStoredFilePath(kind, storedPath);
+  let targetPath: string;
+  try {
+    targetPath = resolveStoredFilePath(kind, storedPath);
+  } catch (error) {
+    if (options.ignoreMissing) {
+      return;
+    }
+    throw error;
+  }
+
   if (!existsSync(targetPath)) {
     if (options.ignoreMissing) {
       return;
