@@ -1,4 +1,5 @@
-import { mockModels, type Model } from "../../mockObjects.js";
+import { db } from "../../db/database.js";
+import type { Model } from "../../mockObjects.js";
 
 export type CreateModelInput = {
   title: string;
@@ -17,73 +18,90 @@ export type ListModelsOptions = {
   limit?: number;
 };
 
-const models: Model[] = [...mockModels];
-let nextModelId =
-  models.reduce((currentMax, model) => Math.max(currentMax, model.id), 0) + 1;
+const MODEL_SELECT_SQL = `
+  SELECT
+    id,
+    title,
+    author,
+    created_at AS createdAt,
+    filename
+  FROM models
+`;
 
 export const listModels = (options: ListModelsOptions = {}): Model[] => {
-  let result = [...models];
+  let sql = MODEL_SELECT_SQL;
+  const parameters: Array<string | number> = [];
 
   if (options.q) {
-    const loweredKeyword = options.q.toLowerCase();
-    result = result.filter((model) => {
-      return (
-        model.title.toLowerCase().includes(loweredKeyword) ||
-        model.author.toLowerCase().includes(loweredKeyword)
-      );
-    });
+    const loweredKeyword = `%${options.q.toLowerCase()}%`;
+    sql += " WHERE (LOWER(title) LIKE ? OR LOWER(author) LIKE ?)";
+    parameters.push(loweredKeyword, loweredKeyword);
   }
+
+  sql += " ORDER BY id DESC";
 
   if (typeof options.limit === "number") {
-    result = result.slice(0, options.limit);
+    sql += " LIMIT ?";
+    parameters.push(options.limit);
   }
 
-  return result;
+  return db.prepare(sql).all(...parameters) as Model[];
 };
 
 export const findModelById = (id: number): Model | undefined => {
-  return models.find((model) => model.id === id);
+  return db.prepare(`${MODEL_SELECT_SQL} WHERE id = ?`).get(id) as Model | undefined;
 };
 
 export const createModel = (input: CreateModelInput): Model => {
-  const newModel: Model = {
-    id: nextModelId,
-    title: input.title,
-    author: input.author,
-    createdAt: new Date().toISOString(),
-    filename: input.filename,
-  };
+  const createdAt = new Date().toISOString();
+  const insertResult = db
+    .prepare(
+      `
+      INSERT INTO models (title, author, created_at, filename)
+      VALUES (?, ?, ?, ?)
+    `
+    )
+    .run(input.title, input.author, createdAt, input.filename);
 
-  nextModelId += 1;
-  models.push(newModel);
-  return newModel;
+  const modelId = Number(insertResult.lastInsertRowid);
+  const createdModel = findModelById(modelId);
+  if (!createdModel) {
+    throw new Error("Failed to create model.");
+  }
+
+  return createdModel;
 };
 
 export const updateModel = (id: number, input: UpdateModelInput): Model | undefined => {
-  const model = findModelById(id);
-  if (!model) {
+  const existingModel = findModelById(id);
+  if (!existingModel) {
     return undefined;
   }
 
+  const fields: string[] = [];
+  const values: string[] = [];
+
   if (input.title !== undefined) {
-    model.title = input.title;
+    fields.push("title = ?");
+    values.push(input.title);
   }
   if (input.author !== undefined) {
-    model.author = input.author;
+    fields.push("author = ?");
+    values.push(input.author);
   }
   if (input.filename !== undefined) {
-    model.filename = input.filename;
+    fields.push("filename = ?");
+    values.push(input.filename);
   }
 
-  return model;
+  if (fields.length > 0) {
+    db.prepare(`UPDATE models SET ${fields.join(", ")} WHERE id = ?`).run(...values, id);
+  }
+
+  return findModelById(id);
 };
 
 export const deleteModel = (id: number): boolean => {
-  const targetIndex = models.findIndex((model) => model.id === id);
-  if (targetIndex === -1) {
-    return false;
-  }
-
-  models.splice(targetIndex, 1);
-  return true;
+  const deleteResult = db.prepare("DELETE FROM models WHERE id = ?").run(id);
+  return deleteResult.changes > 0;
 };
