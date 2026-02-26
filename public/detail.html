@@ -74,6 +74,17 @@
       </main>
     </div>
 
+    <div id="delete-confirm-overlay" class="confirm-overlay hidden" role="dialog" aria-modal="true">
+      <div class="confirm-card">
+        <h2 class="confirm-title">Delete Post</h2>
+        <p id="delete-confirm-message" class="confirm-message"></p>
+        <div class="confirm-actions">
+          <button id="delete-cancel-button" type="button">Cancel</button>
+          <button id="delete-confirm-button" class="danger-button" type="button">Delete</button>
+        </div>
+      </div>
+    </div>
+
     <script src="/scripts/detail.js" defer></script>
   </body>
 </html>

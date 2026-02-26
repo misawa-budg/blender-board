@@ -101,6 +101,7 @@ body {
   gap: 0.35rem;
   font-size: 0.9rem;
   color: var(--muted);
+  min-width: 0;
 }
 
 .field input {
@@ -110,10 +111,24 @@ body {
   font-size: 0.95rem;
   color: var(--text);
   background: #fff;
+  width: 100%;
+  min-width: 0;
 }
 
 .field-file input {
   padding: 0.46rem 0.6rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.field-file input::file-selector-button {
+  margin-right: 0.55rem;
+}
+
+.field-file input::-webkit-file-upload-button {
+  margin-right: 0.55rem;
 }
 
 .composer-actions {
@@ -295,6 +310,54 @@ body {
 
 .detail-edit-actions .danger-button {
   background: #b02020;
+}
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 45%);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  z-index: 30;
+}
+
+.confirm-card {
+  width: min(420px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.confirm-title {
+  margin: 0 0 0.5rem;
+}
+
+.confirm-message {
+  margin: 0 0 0.9rem;
+  color: var(--muted);
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.confirm-actions button {
+  border: 0;
+  border-radius: 10px;
+  background: #d9e0e7;
+  color: #20262c;
+  font-weight: 600;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+}
+
+.confirm-actions .danger-button {
+  background: #b02020;
+  color: #fff;
 }
 
 .empty {

@@ -38,6 +38,13 @@ const editAuthorElement = document.getElementById("edit-author");
 const editFileElement = document.getElementById("edit-file");
 const saveButtonElement = document.getElementById("save-button");
 const deleteButtonElement = document.getElementById("delete-button");
+const deleteConfirmOverlayElement = document.getElementById("delete-confirm-overlay");
+const deleteConfirmMessageElement = document.getElementById("delete-confirm-message");
+const deleteCancelButtonElement = document.getElementById("delete-cancel-button");
+const deleteConfirmButtonElement = document.getElementById("delete-confirm-button");
+
+let originalItemState = null;
+let deleteConfirmResolver = null;
 
 const formatDate = (value) => {
   const date = new Date(value);
@@ -136,6 +143,32 @@ const setActionPending = (pending) => {
   }
 };
 
+const closeDeleteConfirm = (confirmed) => {
+  if (!(deleteConfirmOverlayElement instanceof HTMLElement) || deleteConfirmResolver === null) {
+    return;
+  }
+  deleteConfirmOverlayElement.classList.add("hidden");
+  const resolve = deleteConfirmResolver;
+  deleteConfirmResolver = null;
+  resolve(confirmed);
+};
+
+const requestDeleteConfirmation = () => {
+  if (!(deleteConfirmOverlayElement instanceof HTMLElement)) {
+    return Promise.resolve(
+      window.confirm(`Delete this ${config.label.toLowerCase()}? This cannot be undone.`)
+    );
+  }
+  if (deleteConfirmMessageElement instanceof HTMLElement) {
+    deleteConfirmMessageElement.textContent = `Delete this ${config.label.toLowerCase()}? This action cannot be undone.`;
+  }
+
+  deleteConfirmOverlayElement.classList.remove("hidden");
+  return new Promise((resolve) => {
+    deleteConfirmResolver = resolve;
+  });
+};
+
 const loadItem = async () => {
   showStatus("Loading...", "success");
   try {
@@ -198,6 +231,10 @@ const loadItem = async () => {
     if (detailCardElement instanceof HTMLElement) {
       detailCardElement.classList.remove("hidden");
     }
+    originalItemState = {
+      title: typeof item.title === "string" ? item.title : "",
+      author: typeof item.author === "string" ? item.author : "",
+    };
 
     hideStatus();
   } catch (error) {
@@ -227,6 +264,15 @@ if (
     }
     if (author === "") {
       showActionStatus("Author is required.", "error");
+      return;
+    }
+    const hasReplacementFile = replacementFile instanceof File;
+    const isSameAsOriginal =
+      originalItemState !== null &&
+      title === originalItemState.title &&
+      author === originalItemState.author;
+    if (isSameAsOriginal && !hasReplacementFile) {
+      showActionStatus("No changes to save.", "error");
       return;
     }
 
@@ -271,9 +317,7 @@ if (
 
 if (deleteButtonElement instanceof HTMLButtonElement) {
   deleteButtonElement.addEventListener("click", async () => {
-    const shouldDelete = window.confirm(
-      `Delete this ${config.label.toLowerCase()}? This cannot be undone.`
-    );
+    const shouldDelete = await requestDeleteConfirmation();
     if (!shouldDelete) {
       return;
     }
@@ -306,5 +350,38 @@ if (deleteButtonElement instanceof HTMLButtonElement) {
     }
   });
 }
+
+if (deleteCancelButtonElement instanceof HTMLButtonElement) {
+  deleteCancelButtonElement.addEventListener("click", () => {
+    closeDeleteConfirm(false);
+  });
+}
+
+if (deleteConfirmButtonElement instanceof HTMLButtonElement) {
+  deleteConfirmButtonElement.addEventListener("click", () => {
+    closeDeleteConfirm(true);
+  });
+}
+
+if (deleteConfirmOverlayElement instanceof HTMLElement) {
+  deleteConfirmOverlayElement.addEventListener("click", (event) => {
+    if (event.target === deleteConfirmOverlayElement) {
+      closeDeleteConfirm(false);
+    }
+  });
+}
+
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") {
+    return;
+  }
+  if (!(deleteConfirmOverlayElement instanceof HTMLElement)) {
+    return;
+  }
+  if (deleteConfirmOverlayElement.classList.contains("hidden")) {
+    return;
+  }
+  closeDeleteConfirm(false);
+});
 
 void loadItem();
