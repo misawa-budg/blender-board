@@ -20,6 +20,36 @@
           <a class="tab-link is-active" href="/models">Models</a>
         </nav>
 
+        <section class="composer">
+          <h2>Post a Model</h2>
+          <form id="upload-form" class="upload-form" enctype="multipart/form-data">
+            <div class="form-grid">
+              <label class="field">
+                <span>Title</span>
+                <input id="title-input" name="title" type="text" maxlength="120" required />
+              </label>
+              <label class="field">
+                <span>Author</span>
+                <input id="author-input" name="author" type="text" maxlength="120" required />
+              </label>
+              <label class="field field-file">
+                <span>File</span>
+                <input
+                  id="file-input"
+                  name="file"
+                  type="file"
+                  accept=".obj,.fbx,.blend,.glb,.gltf,.stl,.ply"
+                  required
+                />
+              </label>
+            </div>
+            <div class="composer-actions">
+              <button id="submit-button" type="submit">Upload</button>
+              <p id="form-status" class="status hidden" aria-live="polite"></p>
+            </div>
+          </form>
+        </section>
+
         <section>
           <div class="section-head">
             <h2>Model Gallery</h2>

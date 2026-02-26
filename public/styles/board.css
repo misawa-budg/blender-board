@@ -72,6 +72,84 @@ body {
   margin-bottom: 1rem;
 }
 
+.composer {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem;
+  margin-bottom: 1.2rem;
+}
+
+.composer h2 {
+  margin: 0 0 0.8rem;
+  font-size: 1.15rem;
+}
+
+.upload-form {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.8rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.field input {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.6rem 0.7rem;
+  font-size: 0.95rem;
+  color: var(--text);
+  background: #fff;
+}
+
+.field-file input {
+  padding: 0.46rem 0.6rem;
+}
+
+.composer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.composer-actions button {
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+}
+
+.composer-actions button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.status {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.status-success {
+  color: #0b6b43;
+}
+
+.status-error {
+  color: #b02020;
+}
+
 .tab-button,
 .tab-link {
   border: 0;
