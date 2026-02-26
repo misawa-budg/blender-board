@@ -1,3 +1,4 @@
+import { existsSync, unlinkSync } from "node:fs";
 import { Router } from "express";
 import {
   createImage,
@@ -6,6 +7,7 @@ import {
   listImages,
   updateImage,
 } from "../features/images/service.js";
+import { uploadImageFile } from "../middlewares/upload.js";
 import {
   parsePositiveInt,
   validateCreateMediaInput,
@@ -13,6 +15,7 @@ import {
   validateUpdateMediaInput,
 } from "../utils/validators.js";
 import { createHttpError } from "../utils/httpError.js";
+import { resolveStoredFilePath } from "../utils/storage.js";
 
 const router = Router();
 
@@ -39,13 +42,33 @@ router.get("/:id", (req, res) => {
   return res.json({ item: image });
 });
 
-router.post("/", (req, res) => {
+router.post("/", uploadImageFile, (req, res) => {
   const validationResult = validateCreateMediaInput(req.body as unknown);
   if (!validationResult.ok) {
     throw createHttpError(400, validationResult.message);
   }
 
-  const createdImage = createImage(validationResult.value);
+  if (!req.file) {
+    throw createHttpError(400, "file is required.");
+  }
+
+  let createdImage;
+  try {
+    createdImage = createImage({
+      title: validationResult.value.title,
+      author: validationResult.value.author,
+      storedPath: req.file.filename,
+      originalName: req.file.originalname,
+      mimeType: req.file.mimetype || "application/octet-stream",
+      fileSize: req.file.size,
+    });
+  } catch (error) {
+    if (existsSync(req.file.path)) {
+      unlinkSync(req.file.path);
+    }
+    throw error;
+  }
+
   return res.status(201).json({ item: createdImage });
 });
 
@@ -93,9 +116,12 @@ router.get("/:id/download", (req, res) => {
     throw createHttpError(404, "Image not found.");
   }
 
-  res.setHeader("Content-Type", "application/octet-stream");
-  res.attachment(image.filename);
-  return res.send(`Mock image file content for ${image.filename}\n`);
+  const absoluteFilePath = resolveStoredFilePath("images", image.storedPath);
+  if (!existsSync(absoluteFilePath)) {
+    throw createHttpError(404, "Stored image file not found.");
+  }
+
+  return res.download(absoluteFilePath, image.originalName);
 });
 
 export default router;

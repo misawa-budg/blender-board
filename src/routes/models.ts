@@ -1,3 +1,4 @@
+import { existsSync, unlinkSync } from "node:fs";
 import { Router } from "express";
 import {
   createModel,
@@ -6,6 +7,7 @@ import {
   listModels,
   updateModel,
 } from "../features/models/service.js";
+import { uploadModelFile } from "../middlewares/upload.js";
 import {
   parsePositiveInt,
   validateCreateMediaInput,
@@ -13,6 +15,7 @@ import {
   validateUpdateMediaInput,
 } from "../utils/validators.js";
 import { createHttpError } from "../utils/httpError.js";
+import { resolveStoredFilePath } from "../utils/storage.js";
 
 const router = Router();
 
@@ -39,13 +42,33 @@ router.get("/:id", (req, res) => {
   return res.json({ item: model });
 });
 
-router.post("/", (req, res) => {
+router.post("/", uploadModelFile, (req, res) => {
   const validationResult = validateCreateMediaInput(req.body as unknown);
   if (!validationResult.ok) {
     throw createHttpError(400, validationResult.message);
   }
 
-  const createdModel = createModel(validationResult.value);
+  if (!req.file) {
+    throw createHttpError(400, "file is required.");
+  }
+
+  let createdModel;
+  try {
+    createdModel = createModel({
+      title: validationResult.value.title,
+      author: validationResult.value.author,
+      storedPath: req.file.filename,
+      originalName: req.file.originalname,
+      mimeType: req.file.mimetype || "application/octet-stream",
+      fileSize: req.file.size,
+    });
+  } catch (error) {
+    if (existsSync(req.file.path)) {
+      unlinkSync(req.file.path);
+    }
+    throw error;
+  }
+
   return res.status(201).json({ item: createdModel });
 });
 
@@ -93,9 +116,12 @@ router.get("/:id/download", (req, res) => {
     throw createHttpError(404, "Model not found.");
   }
 
-  res.setHeader("Content-Type", "application/octet-stream");
-  res.attachment(model.filename);
-  return res.send(`Mock model file content for ${model.filename}\n`);
+  const absoluteFilePath = resolveStoredFilePath("models", model.storedPath);
+  if (!existsSync(absoluteFilePath)) {
+    throw createHttpError(404, "Stored model file not found.");
+  }
+
+  return res.download(absoluteFilePath, model.originalName);
 });
 
 export default router;
