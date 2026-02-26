@@ -93,10 +93,47 @@ const ensureLegacyFilenameColumnMigration: Migration = {
   },
 };
 
+const addModelPreviewAndLinkTablesMigration: Migration = {
+  id: "004_add_model_preview_and_image_model_links",
+  up: (db) => {
+    if (!hasColumn(db, "models", "preview_stored_path")) {
+      db.prepare("ALTER TABLE models ADD COLUMN preview_stored_path TEXT NOT NULL DEFAULT ''").run();
+    }
+    if (!hasColumn(db, "models", "preview_original_name")) {
+      db.prepare("ALTER TABLE models ADD COLUMN preview_original_name TEXT NOT NULL DEFAULT ''").run();
+    }
+    if (!hasColumn(db, "models", "preview_mime_type")) {
+      db.prepare(
+        "ALTER TABLE models ADD COLUMN preview_mime_type TEXT NOT NULL DEFAULT ''"
+      ).run();
+    }
+    if (!hasColumn(db, "models", "preview_file_size")) {
+      db.prepare("ALTER TABLE models ADD COLUMN preview_file_size INTEGER NOT NULL DEFAULT 0").run();
+    }
+
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS image_model_links (
+        image_id INTEGER NOT NULL,
+        model_id INTEGER NOT NULL,
+        PRIMARY KEY (image_id, model_id),
+        FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE,
+        FOREIGN KEY (model_id) REFERENCES models(id) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_image_model_links_image_id
+      ON image_model_links (image_id);
+
+      CREATE INDEX IF NOT EXISTS idx_image_model_links_model_id
+      ON image_model_links (model_id);
+    `);
+  },
+};
+
 const migrations: Migration[] = [
   createMediaTablesMigration,
   addFileColumnsMigration,
   ensureLegacyFilenameColumnMigration,
+  addModelPreviewAndLinkTablesMigration,
 ];
 
 export const runMigrations = (db: Database.Database): void => {

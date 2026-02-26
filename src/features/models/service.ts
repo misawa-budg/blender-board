@@ -9,6 +9,10 @@ export type CreateModelInput = {
   originalName: string;
   mimeType: string;
   fileSize: number;
+  previewStoredPath?: string;
+  previewOriginalName?: string;
+  previewMimeType?: string;
+  previewFileSize?: number;
 };
 
 export type UpdateModelInput = {
@@ -18,6 +22,10 @@ export type UpdateModelInput = {
   originalName?: string;
   mimeType?: string;
   fileSize?: number;
+  previewStoredPath?: string;
+  previewOriginalName?: string;
+  previewMimeType?: string;
+  previewFileSize?: number;
 };
 
 export type ListModelsOptions = {
@@ -54,7 +62,14 @@ const MODEL_SELECT_SQL = `
     stored_path AS storedPath,
     original_name AS originalName,
     mime_type AS mimeType,
-    file_size AS fileSize
+    file_size AS fileSize,
+    NULLIF(preview_stored_path, '') AS previewStoredPath,
+    NULLIF(preview_original_name, '') AS previewOriginalName,
+    NULLIF(preview_mime_type, '') AS previewMimeType,
+    CASE
+      WHEN preview_file_size > 0 THEN preview_file_size
+      ELSE NULL
+    END AS previewFileSize
   FROM models
 `;
 
@@ -121,9 +136,13 @@ export const createModel = (input: CreateModelInput): Model => {
         stored_path,
         original_name,
         mime_type,
-        file_size
+        file_size,
+        preview_stored_path,
+        preview_original_name,
+        preview_mime_type,
+        preview_file_size
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
     )
     .run(
@@ -134,7 +153,11 @@ export const createModel = (input: CreateModelInput): Model => {
       input.storedPath,
       input.originalName,
       input.mimeType,
-      input.fileSize
+      input.fileSize,
+      input.previewStoredPath ?? "",
+      input.previewOriginalName ?? "",
+      input.previewMimeType ?? "",
+      input.previewFileSize ?? 0
     );
 
   const modelId = Number(insertResult.lastInsertRowid);
@@ -178,6 +201,22 @@ const updateModelInTransaction = (id: number, input: UpdateModelInput): Model | 
   if (input.fileSize !== undefined) {
     fields.push("file_size = ?");
     values.push(input.fileSize);
+  }
+  if (input.previewStoredPath !== undefined) {
+    fields.push("preview_stored_path = ?");
+    values.push(input.previewStoredPath);
+  }
+  if (input.previewOriginalName !== undefined) {
+    fields.push("preview_original_name = ?");
+    values.push(input.previewOriginalName);
+  }
+  if (input.previewMimeType !== undefined) {
+    fields.push("preview_mime_type = ?");
+    values.push(input.previewMimeType);
+  }
+  if (input.previewFileSize !== undefined) {
+    fields.push("preview_file_size = ?");
+    values.push(input.previewFileSize);
   }
 
   if (fields.length === 0) {

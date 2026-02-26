@@ -9,5 +9,10 @@ type MediaEntity = {
   fileSize: number;
 };
 
-export type Model = MediaEntity;
+export type Model = MediaEntity & {
+  previewStoredPath: string | null;
+  previewOriginalName: string | null;
+  previewMimeType: string | null;
+  previewFileSize: number | null;
+};
 export type Image = MediaEntity;
