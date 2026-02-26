@@ -13,6 +13,10 @@ const { default: app } = await import("../app.js");
 const api = request(app);
 
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const glbSignature = Buffer.from([
+  0x67, 0x6c, 0x54, 0x46, 0x02, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00,
+]);
+const blendSignature = Buffer.from("BLENDER", "ascii");
 
 const createTempFile = (name: string, content: Buffer): string => {
   const path = join(testRootPath, name);
@@ -146,6 +150,95 @@ test("OpenAPI定義を返す", async () => {
   assert.equal(response.body.openapi, "3.1.0");
   assert.equal(typeof response.body.paths?.["/api/images"], "object");
   assert.equal(typeof response.body.paths?.["/api/models"], "object");
+});
+
+test("画像とモデルの関連付けを保存・取得できる", async () => {
+  const modelPath = createTempFile("linked-model.glb", Buffer.concat([glbSignature, Buffer.from("M")]));
+  const imagePath = createTempFile("linked-image.png", Buffer.concat([pngSignature, Buffer.from("I")]));
+
+  const modelCreated = await api
+    .post("/api/models")
+    .field("title", "linked-model")
+    .field("author", "tester")
+    .attach("file", modelPath);
+  assert.equal(modelCreated.status, 201);
+  const modelId = Number(modelCreated.body.item.id);
+
+  const imageCreated = await api
+    .post("/api/images")
+    .field("title", "linked-image")
+    .field("author", "tester")
+    .field("modelIds", String(modelId))
+    .attach("file", imagePath);
+  assert.equal(imageCreated.status, 201);
+  const imageId = Number(imageCreated.body.item.id);
+
+  const imageDetail = await api.get(`/api/images/${imageId}`);
+  assert.equal(imageDetail.status, 200);
+  assert.ok(Array.isArray(imageDetail.body.relatedModels));
+  assert.equal(imageDetail.body.relatedModels.length, 1);
+  assert.equal(imageDetail.body.relatedModels[0].id, modelId);
+  assert.equal(typeof imageDetail.body.relatedModels[0].downloadUrl, "string");
+
+  const modelDetail = await api.get(`/api/models/${modelId}`);
+  assert.equal(modelDetail.status, 200);
+  assert.ok(Array.isArray(modelDetail.body.relatedImages));
+  assert.equal(modelDetail.body.relatedImages.length, 1);
+  assert.equal(modelDetail.body.relatedImages[0].id, imageId);
+});
+
+test("画像PATCHでmodelIdsのみ更新できる", async () => {
+  const modelPath = createTempFile("patch-model.glb", Buffer.concat([glbSignature, Buffer.from("P")]));
+  const imagePath = createTempFile("patch-image.png", Buffer.concat([pngSignature, Buffer.from("P")]));
+
+  const modelCreated = await api
+    .post("/api/models")
+    .field("title", "patch-model")
+    .field("author", "tester")
+    .attach("file", modelPath);
+  assert.equal(modelCreated.status, 201);
+  const modelId = Number(modelCreated.body.item.id);
+
+  const imageCreated = await api
+    .post("/api/images")
+    .field("title", "patch-image")
+    .field("author", "tester")
+    .attach("file", imagePath);
+  assert.equal(imageCreated.status, 201);
+  const imageId = Number(imageCreated.body.item.id);
+
+  const patched = await api.patch(`/api/images/${imageId}`).field("modelIds", String(modelId));
+  assert.equal(patched.status, 200);
+
+  const imageDetail = await api.get(`/api/images/${imageId}`);
+  assert.equal(imageDetail.status, 200);
+  assert.ok(Array.isArray(imageDetail.body.relatedModels));
+  assert.equal(imageDetail.body.relatedModels[0].id, modelId);
+});
+
+test("モデル投稿時にpreviewFileを任意添付でき、previewAPIで返せる", async () => {
+  const modelSourcePath = createTempFile(
+    "preview-source.blend",
+    Buffer.concat([blendSignature, Buffer.from("SOURCE")])
+  );
+  const modelPreviewPath = createTempFile(
+    "preview-binary.glb",
+    Buffer.concat([glbSignature, Buffer.from("PREVIEW")])
+  );
+
+  const created = await api
+    .post("/api/models")
+    .field("title", "preview-model")
+    .field("author", "tester")
+    .attach("file", modelSourcePath)
+    .attach("previewFile", modelPreviewPath);
+  assert.equal(created.status, 201);
+  assert.equal(typeof created.body.item.previewUrl, "string");
+
+  const modelId = Number(created.body.item.id);
+  const preview = await api.get(`/api/models/${modelId}/preview`);
+  assert.equal(preview.status, 200);
+  assert.match(String(preview.headers["content-type"] ?? ""), /model\/gltf-binary/);
 });
 
 test.after(() => {

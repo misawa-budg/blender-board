@@ -56,6 +56,10 @@ const openApiDocument = {
                 properties: {
                   title: { type: "string" },
                   author: { type: "string" },
+                  modelIds: {
+                    type: "string",
+                    description: "関連モデルID。カンマ区切りまたはJSON配列文字列",
+                  },
                   file: { type: "string", format: "binary" },
                 },
               },
@@ -71,6 +75,10 @@ const openApiDocument = {
                   type: "object",
                   properties: {
                     item: { $ref: "#/components/schemas/MediaItem" },
+                    relatedModels: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/RelatedModel" },
+                    },
                   },
                 },
               },
@@ -127,6 +135,10 @@ const openApiDocument = {
                 properties: {
                   title: { type: "string" },
                   author: { type: "string" },
+                  modelIds: {
+                    type: "string",
+                    description: "関連モデルID。カンマ区切りまたはJSON配列文字列",
+                  },
                   file: { type: "string", format: "binary" },
                 },
               },
@@ -195,6 +207,11 @@ const openApiDocument = {
                   title: { type: "string" },
                   author: { type: "string" },
                   file: { type: "string", format: "binary" },
+                  previewFile: {
+                    type: "string",
+                    format: "binary",
+                    description: "任意のWebプレビュー用glb/gltf",
+                  },
                 },
               },
             },
@@ -209,6 +226,10 @@ const openApiDocument = {
                   type: "object",
                   properties: {
                     item: { $ref: "#/components/schemas/MediaItem" },
+                    relatedImages: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/RelatedImage" },
+                    },
                   },
                 },
               },
@@ -250,6 +271,11 @@ const openApiDocument = {
                   title: { type: "string" },
                   author: { type: "string" },
                   file: { type: "string", format: "binary" },
+                  previewFile: {
+                    type: "string",
+                    format: "binary",
+                    description: "任意のWebプレビュー用glb/gltf",
+                  },
                 },
               },
             },
@@ -330,6 +356,34 @@ const openApiDocument = {
         properties: {
           error: { type: "string" },
           code: { type: "string" },
+        },
+      },
+      RelatedModel: {
+        type: "object",
+        properties: {
+          id: { type: "integer" },
+          title: { type: "string" },
+          author: { type: "string" },
+          createdAt: { type: "string", format: "date-time" },
+          originalName: { type: "string" },
+          mimeType: { type: "string" },
+          fileSize: { type: "integer" },
+          previewUrl: { type: ["string", "null"] },
+          downloadUrl: { type: "string" },
+        },
+      },
+      RelatedImage: {
+        type: "object",
+        properties: {
+          id: { type: "integer" },
+          title: { type: "string" },
+          author: { type: "string" },
+          createdAt: { type: "string", format: "date-time" },
+          originalName: { type: "string" },
+          mimeType: { type: "string" },
+          fileSize: { type: "integer" },
+          previewUrl: { type: "string" },
+          downloadUrl: { type: "string" },
         },
       },
     },
