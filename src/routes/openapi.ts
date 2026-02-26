@@ -76,10 +76,6 @@ const openApiDocument = {
                   type: "object",
                   properties: {
                     item: { $ref: "#/components/schemas/MediaItem" },
-                    relatedModels: {
-                      type: "array",
-                      items: { $ref: "#/components/schemas/RelatedModel" },
-                    },
                   },
                 },
               },
@@ -228,10 +224,6 @@ const openApiDocument = {
                   type: "object",
                   properties: {
                     item: { $ref: "#/components/schemas/MediaItem" },
-                    relatedImages: {
-                      type: "array",
-                      items: { $ref: "#/components/schemas/RelatedImage" },
-                    },
                   },
                 },
               },

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -22,6 +22,16 @@ const createTempFile = (name: string, content: Buffer): string => {
   const path = join(testRootPath, name);
   writeFileSync(path, content);
   return path;
+};
+
+const countUploadedFiles = (kind: "images" | "models"): number => {
+  const targetPath = join(testRootPath, "uploads", kind);
+  try {
+    return readdirSync(targetPath, { withFileTypes: true }).filter((entry) => entry.isFile())
+      .length;
+  } catch {
+    return 0;
+  }
 };
 
 const getErrorPayload = (body: unknown): { error: string; code: string } => {
@@ -125,6 +135,53 @@ test("拡張子偽装ファイルを拒否する", async () => {
   assert.equal(response.status, 400);
   const payload = getErrorPayload(response.body);
   assert.equal(payload.code, "invalid_file_signature");
+});
+
+test("画像POSTのバリデーション失敗時に保存ファイルを残さない", async () => {
+  const filePath = createTempFile(
+    "post-validation-cleanup.png",
+    Buffer.concat([pngSignature, Buffer.from("VALID")])
+  );
+  const beforeCount = countUploadedFiles("images");
+
+  const response = await api
+    .post("/api/images")
+    .field("title", " ")
+    .field("author", "cleanup-user")
+    .attach("file", filePath);
+
+  assert.equal(response.status, 400);
+  const payload = getErrorPayload(response.body);
+  assert.equal(payload.code, "bad_request");
+
+  const afterCount = countUploadedFiles("images");
+  assert.equal(afterCount, beforeCount);
+});
+
+test("モデルPOSTでpreviewFile不正時にsourceFileを残さない", async () => {
+  const sourcePath = createTempFile(
+    "model-post-cleanup-source.glb",
+    Buffer.concat([glbSignature, Buffer.from("SOURCE")])
+  );
+  const invalidPreviewPath = createTempFile(
+    "model-post-cleanup-preview.glb",
+    Buffer.from("not-glb-data")
+  );
+  const beforeCount = countUploadedFiles("models");
+
+  const response = await api
+    .post("/api/models")
+    .field("title", "cleanup-model")
+    .field("author", "cleanup-user")
+    .attach("file", sourcePath)
+    .attach("previewFile", invalidPreviewPath);
+
+  assert.equal(response.status, 400);
+  const payload = getErrorPayload(response.body);
+  assert.equal(payload.code, "invalid_file_signature");
+
+  const afterCount = countUploadedFiles("models");
+  assert.equal(afterCount, beforeCount);
 });
 
 test("画像差し替え時にpreviewUrlが更新される", async () => {
