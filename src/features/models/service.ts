@@ -1,5 +1,6 @@
 import { db } from "../../db/database.js";
 import type { Model } from "../../types/entities.js";
+import type { ListSortField, ListSortOrder } from "../../utils/validators.js";
 
 export type CreateModelInput = {
   title: string;
@@ -22,6 +23,18 @@ export type UpdateModelInput = {
 export type ListModelsOptions = {
   q?: string;
   limit?: number;
+  page?: number;
+  sort?: ListSortField;
+  order?: ListSortOrder;
+};
+
+export type ListModelsResult = {
+  items: Model[];
+  total: number;
+  page: number;
+  limit: number | null;
+  sort: ListSortField;
+  order: ListSortOrder;
 };
 
 type UpdateModelHookArgs = {
@@ -45,24 +58,50 @@ const MODEL_SELECT_SQL = `
   FROM models
 `;
 
-export const listModels = (options: ListModelsOptions = {}): Model[] => {
-  let sql = MODEL_SELECT_SQL;
-  const parameters: Array<string | number> = [];
-
-  if (options.q) {
-    const loweredKeyword = `%${options.q.toLowerCase()}%`;
-    sql += " WHERE (LOWER(title) LIKE ? OR LOWER(author) LIKE ?)";
-    parameters.push(loweredKeyword, loweredKeyword);
+const buildListFilter = (
+  options: ListModelsOptions
+): { whereClause: string; whereParams: string[] } => {
+  if (!options.q) {
+    return { whereClause: "", whereParams: [] };
   }
 
-  sql += " ORDER BY id DESC";
+  const loweredKeyword = `%${options.q.toLowerCase()}%`;
+  return {
+    whereClause: " WHERE (LOWER(title) LIKE ? OR LOWER(author) LIKE ?)",
+    whereParams: [loweredKeyword, loweredKeyword],
+  };
+};
 
-  if (typeof options.limit === "number") {
-    sql += " LIMIT ?";
-    parameters.push(options.limit);
+const sortFieldToSqlColumn: Record<ListSortField, string> = {
+  id: "id",
+  createdAt: "created_at",
+  title: "title",
+};
+
+export const listModels = (options: ListModelsOptions = {}): ListModelsResult => {
+  const sort: ListSortField = options.sort ?? "id";
+  const order: ListSortOrder = options.order ?? "desc";
+  const page = options.page ?? 1;
+  const limit = options.limit ?? null;
+  const offset = limit === null ? 0 : (page - 1) * limit;
+
+  const { whereClause, whereParams } = buildListFilter(options);
+  const countSql = `SELECT COUNT(*) AS total FROM models${whereClause}`;
+  const countRow = db.prepare(countSql).get(...whereParams) as { total: number };
+  const total = Number(countRow.total ?? 0);
+
+  let listSql = `${MODEL_SELECT_SQL}${whereClause} ORDER BY ${sortFieldToSqlColumn[sort]} ${
+    order === "asc" ? "ASC" : "DESC"
+  }`;
+  const listParams: Array<string | number> = [...whereParams];
+
+  if (limit !== null) {
+    listSql += " LIMIT ? OFFSET ?";
+    listParams.push(limit, offset);
   }
 
-  return db.prepare(sql).all(...parameters) as Model[];
+  const items = db.prepare(listSql).all(...listParams) as Model[];
+  return { items, total, page, limit, sort, order };
 };
 
 export const findModelById = (id: number): Model | undefined => {

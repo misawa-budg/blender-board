@@ -51,8 +51,18 @@ router.get("/", (req, res) => {
     throw createHttpError(400, queryValidation.message);
   }
 
-  const items = listImages(queryValidation.value).map(toImageListItemResponse);
-  return res.json({ items });
+  const result = listImages(queryValidation.value);
+  const items = result.items.map(toImageListItemResponse);
+  return res.json({
+    items,
+    meta: {
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      sort: result.sort,
+      order: result.order,
+    },
+  });
 });
 
 router.get("/:id", (req, res) => {

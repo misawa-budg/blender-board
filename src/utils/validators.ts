@@ -1,8 +1,14 @@
 export type ValidationResult<T> = { ok: true; value: T } | { ok: false; message: string };
 
+export type ListSortField = "id" | "createdAt" | "title";
+export type ListSortOrder = "asc" | "desc";
+
 export type ListQueryOptions = {
   q?: string;
   limit?: number;
+  page?: number;
+  sort?: ListSortField;
+  order?: ListSortOrder;
 };
 
 export type MediaCreateInput = {
@@ -59,6 +65,44 @@ export const validateListQuery = (value: unknown): ValidationResult<ListQueryOpt
     }
 
     options.limit = parsedLimit;
+  }
+
+  if (candidate.page !== undefined) {
+    if (typeof candidate.page !== "string") {
+      return { ok: false, message: "pageは正の整数で指定してください。" };
+    }
+
+    const parsedPage = parsePositiveInt(candidate.page);
+    if (parsedPage === null || parsedPage > 100000) {
+      return { ok: false, message: "pageは1から100000の範囲で指定してください。" };
+    }
+    options.page = parsedPage;
+  }
+
+  if (options.page !== undefined && options.limit === undefined) {
+    return { ok: false, message: "pageを指定する場合はlimitも指定してください。" };
+  }
+
+  if (candidate.sort !== undefined) {
+    if (typeof candidate.sort !== "string") {
+      return { ok: false, message: "sortはid, createdAt, titleのいずれかで指定してください。" };
+    }
+
+    if (candidate.sort !== "id" && candidate.sort !== "createdAt" && candidate.sort !== "title") {
+      return { ok: false, message: "sortはid, createdAt, titleのいずれかで指定してください。" };
+    }
+    options.sort = candidate.sort;
+  }
+
+  if (candidate.order !== undefined) {
+    if (typeof candidate.order !== "string") {
+      return { ok: false, message: "orderはascまたはdescで指定してください。" };
+    }
+
+    if (candidate.order !== "asc" && candidate.order !== "desc") {
+      return { ok: false, message: "orderはascまたはdescで指定してください。" };
+    }
+    options.order = candidate.order;
   }
 
   return { ok: true, value: options };

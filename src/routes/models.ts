@@ -51,8 +51,18 @@ router.get("/", (req, res) => {
     throw createHttpError(400, queryValidation.message);
   }
 
-  const items = listModels(queryValidation.value).map(toModelListItemResponse);
-  return res.json({ items });
+  const result = listModels(queryValidation.value);
+  const items = result.items.map(toModelListItemResponse);
+  return res.json({
+    items,
+    meta: {
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      sort: result.sort,
+      order: result.order,
+    },
+  });
 });
 
 router.get("/:id", (req, res) => {
