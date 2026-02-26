@@ -85,6 +85,40 @@ body {
   font-size: 1.15rem;
 }
 
+.form-panel {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.form-panel > summary {
+  cursor: pointer;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f8fafc;
+  color: var(--text);
+  font-weight: 600;
+  padding: 0.58rem 0.72rem;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.form-panel > summary::-webkit-details-marker {
+  display: none;
+}
+
+.form-panel > summary::after {
+  content: "▼";
+  font-size: 0.75rem;
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+
+.form-panel[open] > summary::after {
+  transform: rotate(180deg);
+}
+
 .upload-form {
   display: grid;
   gap: 0.8rem;
@@ -140,7 +174,25 @@ body {
 .picker > summary {
   cursor: pointer;
   padding: 0.6rem 0.7rem;
-  list-style: auto;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.picker > summary::-webkit-details-marker {
+  display: none;
+}
+
+.picker > summary::after {
+  content: "▼";
+  font-size: 0.72rem;
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+
+.picker[open] > summary::after {
+  transform: rotate(180deg);
 }
 
 .picker-body {

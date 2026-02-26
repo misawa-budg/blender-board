@@ -71,47 +71,55 @@
             </div>
 
             <section class="detail-edit">
-              <h3>編集</h3>
-              <form id="edit-form" class="upload-form" enctype="multipart/form-data">
-                <div class="form-grid">
-                  <label class="field">
-                    <span>タイトル</span>
-                    <input id="edit-title" name="title" type="text" maxlength="120" required />
-                  </label>
-                  <label class="field">
-                    <span>投稿者</span>
-                    <input id="edit-author" name="author" type="text" maxlength="120" required />
-                  </label>
-                  <label id="edit-model-ids-field" class="field hidden">
-                    <span>使用モデル（任意）</span>
-                    <details id="edit-model-picker" class="picker">
-                      <summary>モデルを選択</summary>
-                      <div class="picker-body">
-                        <input
-                          id="edit-model-picker-search"
-                          type="text"
-                          placeholder="モデル名で検索"
-                          autocomplete="off"
-                        />
-                        <p id="edit-model-picker-hint" class="picker-hint"></p>
-                        <ul id="edit-model-picker-options" class="picker-options"></ul>
-                      </div>
-                    </details>
-                  </label>
-                  <label class="field field-file">
-                    <span>ファイル差し替え（任意）</span>
-                    <input id="edit-file" name="file" type="file" />
-                  </label>
-                  <label id="edit-preview-file-field" class="field field-file hidden">
-                    <span>プレビュー用3D差し替え（任意 / glb,gltf）</span>
-                    <input id="edit-preview-file" name="previewFile" type="file" accept=".glb,.gltf" />
-                  </label>
-                </div>
-                <div class="detail-edit-actions">
-                  <button id="save-button" type="submit">保存</button>
-                  <button id="delete-button" class="danger-button" type="button">削除</button>
-                </div>
-              </form>
+              <details id="edit-form-panel" class="form-panel">
+                <summary>編集フォームを表示</summary>
+                <h3>編集</h3>
+                <form id="edit-form" class="upload-form" enctype="multipart/form-data">
+                  <div class="form-grid">
+                    <label class="field">
+                      <span>タイトル</span>
+                      <input id="edit-title" name="title" type="text" maxlength="120" required />
+                    </label>
+                    <label class="field">
+                      <span>投稿者</span>
+                      <input id="edit-author" name="author" type="text" maxlength="120" required />
+                    </label>
+                    <label id="edit-model-ids-field" class="field hidden">
+                      <span>使用モデル（任意）</span>
+                      <details id="edit-model-picker" class="picker">
+                        <summary>モデルを選択</summary>
+                        <div class="picker-body">
+                          <input
+                            id="edit-model-picker-search"
+                            type="text"
+                            placeholder="モデル名で検索"
+                            autocomplete="off"
+                          />
+                          <p id="edit-model-picker-hint" class="picker-hint"></p>
+                          <ul id="edit-model-picker-options" class="picker-options"></ul>
+                        </div>
+                      </details>
+                    </label>
+                    <label class="field field-file">
+                      <span>ファイル差し替え（任意）</span>
+                      <input id="edit-file" name="file" type="file" />
+                    </label>
+                    <label id="edit-preview-file-field" class="field field-file hidden">
+                      <span>プレビュー用3D差し替え（任意 / glb,gltf）</span>
+                      <input
+                        id="edit-preview-file"
+                        name="previewFile"
+                        type="file"
+                        accept=".glb,.gltf"
+                      />
+                    </label>
+                  </div>
+                  <div class="detail-edit-actions">
+                    <button id="save-button" type="submit">保存</button>
+                    <button id="delete-button" class="danger-button" type="button">削除</button>
+                  </div>
+                </form>
+              </details>
             </section>
           </article>
         </section>

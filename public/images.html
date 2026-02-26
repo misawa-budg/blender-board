@@ -21,51 +21,54 @@
         </nav>
 
         <section class="composer">
-          <h2>画像を投稿</h2>
-          <form id="upload-form" class="upload-form" enctype="multipart/form-data">
-            <div class="form-grid">
-              <label class="field">
-                <span>タイトル</span>
-                <input id="title-input" name="title" type="text" maxlength="120" required />
-              </label>
-              <label class="field">
-                <span>投稿者</span>
-                <input id="author-input" name="author" type="text" maxlength="120" required />
-              </label>
-              <label class="field field-file">
-                <span>ファイル</span>
-                <input
-                  id="file-input"
-                  name="file"
-                  type="file"
-                  accept=".png,.jpg,.jpeg,.webp,.gif"
-                  required
-                />
-              </label>
-              <div class="field">
-                <span>使用モデル（任意）</span>
-                <details id="model-picker" class="picker">
-                  <summary>モデルを選択</summary>
-                  <div class="picker-body">
-                    <input
-                      id="model-picker-search"
-                      type="text"
-                      placeholder="モデル名で検索"
-                      autocomplete="off"
-                    />
-                    <p id="model-picker-hint" class="picker-hint">
-                      投稿者を入力すると過去モデルを選択できます。
-                    </p>
-                    <ul id="model-picker-options" class="picker-options"></ul>
-                  </div>
-                </details>
+          <details id="post-form-panel" class="form-panel">
+            <summary>投稿フォームを表示</summary>
+            <h2>画像を投稿</h2>
+            <form id="upload-form" class="upload-form" enctype="multipart/form-data">
+              <div class="form-grid">
+                <label class="field">
+                  <span>タイトル</span>
+                  <input id="title-input" name="title" type="text" maxlength="120" required />
+                </label>
+                <label class="field">
+                  <span>投稿者</span>
+                  <input id="author-input" name="author" type="text" maxlength="120" required />
+                </label>
+                <label class="field field-file">
+                  <span>ファイル</span>
+                  <input
+                    id="file-input"
+                    name="file"
+                    type="file"
+                    accept=".png,.jpg,.jpeg,.webp,.gif"
+                    required
+                  />
+                </label>
+                <div class="field">
+                  <span>使用モデル（任意）</span>
+                  <details id="model-picker" class="picker">
+                    <summary>モデルを選択</summary>
+                    <div class="picker-body">
+                      <input
+                        id="model-picker-search"
+                        type="text"
+                        placeholder="モデル名で検索"
+                        autocomplete="off"
+                      />
+                      <p id="model-picker-hint" class="picker-hint">
+                        投稿者を入力すると過去モデルを選択できます。
+                      </p>
+                      <ul id="model-picker-options" class="picker-options"></ul>
+                    </div>
+                  </details>
+                </div>
               </div>
-            </div>
-            <div class="composer-actions">
-              <button id="submit-button" type="submit">投稿する</button>
-              <p id="form-status" class="status hidden" aria-live="polite"></p>
-            </div>
-          </form>
+              <div class="composer-actions">
+                <button id="submit-button" type="submit">投稿する</button>
+                <p id="form-status" class="status hidden" aria-live="polite"></p>
+              </div>
+            </form>
+          </details>
         </section>
 
         <section>
