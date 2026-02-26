@@ -1,5 +1,5 @@
 import { db } from "../../db/database.js";
-import type { Model } from "../../mockObjects.js";
+import type { Model } from "../../types/entities.js";
 
 export type CreateModelInput = {
   title: string;

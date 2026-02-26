@@ -1,5 +1,5 @@
 import { db } from "../../db/database.js";
-import type { Image } from "../../mockObjects.js";
+import type { Image } from "../../types/entities.js";
 
 export type CreateImageInput = {
   title: string;
