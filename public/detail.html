@@ -83,8 +83,20 @@
                     <input id="edit-author" name="author" type="text" maxlength="120" required />
                   </label>
                   <label id="edit-model-ids-field" class="field hidden">
-                    <span>関連モデルID（任意 / カンマ区切り）</span>
-                    <input id="edit-model-ids" name="modelIds" type="text" placeholder="例: 12,15,21" />
+                    <span>使用モデル（任意）</span>
+                    <details id="edit-model-picker" class="picker">
+                      <summary>モデルを選択</summary>
+                      <div class="picker-body">
+                        <input
+                          id="edit-model-picker-search"
+                          type="text"
+                          placeholder="モデル名で検索"
+                          autocomplete="off"
+                        />
+                        <p id="edit-model-picker-hint" class="picker-hint"></p>
+                        <ul id="edit-model-picker-options" class="picker-options"></ul>
+                      </div>
+                    </details>
                   </label>
                   <label class="field field-file">
                     <span>ファイル差し替え（任意）</span>

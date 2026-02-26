@@ -46,7 +46,10 @@ const editFormElement = document.getElementById("edit-form");
 const editTitleElement = document.getElementById("edit-title");
 const editAuthorElement = document.getElementById("edit-author");
 const editModelIdsFieldElement = document.getElementById("edit-model-ids-field");
-const editModelIdsElement = document.getElementById("edit-model-ids");
+const editModelPickerElement = document.getElementById("edit-model-picker");
+const editModelPickerSearchElement = document.getElementById("edit-model-picker-search");
+const editModelPickerHintElement = document.getElementById("edit-model-picker-hint");
+const editModelPickerOptionsElement = document.getElementById("edit-model-picker-options");
 const editFileElement = document.getElementById("edit-file");
 const editPreviewFileFieldElement = document.getElementById("edit-preview-file-field");
 const editPreviewFileElement = document.getElementById("edit-preview-file");
@@ -60,6 +63,12 @@ const deleteConfirmButtonElement = document.getElementById("delete-confirm-butto
 
 let originalItemState = null;
 let deleteConfirmResolver = null;
+const editModelPickerState = {
+  selectedIds: new Set(),
+  models: [],
+  loading: false,
+  requestToken: 0,
+};
 
 const showStatus = (message, type) => {
   if (!(detailStatusElement instanceof HTMLElement)) {
@@ -161,6 +170,173 @@ const withCacheBust = (url) => {
   }
   const separator = url.includes("?") ? "&" : "?";
   return `${url}${separator}r=${Date.now()}`;
+};
+
+const normalizeModelIds = (ids) => {
+  return [...ids]
+    .filter((id) => Number.isInteger(id) && id > 0)
+    .sort((a, b) => a - b)
+    .join(",");
+};
+
+const setEditModelPickerHint = (message) => {
+  if (!(editModelPickerHintElement instanceof HTMLElement)) {
+    return;
+  }
+  editModelPickerHintElement.textContent = message;
+};
+
+const getEditModelPickerSummaryElement = () => {
+  if (!(editModelPickerElement instanceof HTMLDetailsElement)) {
+    return null;
+  }
+  const summary = editModelPickerElement.querySelector("summary");
+  return summary instanceof HTMLElement ? summary : null;
+};
+
+const renderEditModelPickerSummary = () => {
+  if (kind !== "images") {
+    return;
+  }
+  const summaryElement = getEditModelPickerSummaryElement();
+  if (!summaryElement) {
+    return;
+  }
+
+  const selectedCount = editModelPickerState.selectedIds.size;
+  summaryElement.textContent =
+    selectedCount > 0 ? `モデルを選択（${selectedCount}件選択中）` : "モデルを選択";
+};
+
+const renderEditModelPickerOptions = () => {
+  if (kind !== "images") {
+    return;
+  }
+  if (!(editModelPickerOptionsElement instanceof HTMLElement)) {
+    return;
+  }
+  if (!(editAuthorElement instanceof HTMLInputElement)) {
+    return;
+  }
+
+  const author = editAuthorElement.value.trim();
+  if (author === "") {
+    editModelPickerOptionsElement.innerHTML = "";
+    setEditModelPickerHint("投稿者を入力すると過去モデルを選択できます。");
+    renderEditModelPickerSummary();
+    return;
+  }
+
+  if (editModelPickerState.loading) {
+    editModelPickerOptionsElement.innerHTML = "";
+    setEditModelPickerHint("候補を読み込み中です...");
+    renderEditModelPickerSummary();
+    return;
+  }
+
+  if (editModelPickerState.models.length === 0) {
+    editModelPickerOptionsElement.innerHTML = '<li class="picker-empty">候補がありません。</li>';
+    setEditModelPickerHint("検索条件に一致するモデルがありません。");
+    renderEditModelPickerSummary();
+    return;
+  }
+
+  setEditModelPickerHint("チェックを入れると使用モデルとして関連付けます。");
+  editModelPickerOptionsElement.innerHTML = editModelPickerState.models
+    .map((model) => {
+      const checked = editModelPickerState.selectedIds.has(model.id) ? "checked" : "";
+      return `
+        <li>
+          <label class="picker-option">
+            <input type="checkbox" data-model-id="${model.id}" ${checked} />
+            <span>${escapeHtml(model.title)} (#${model.id})<br /><small>${escapeHtml(model.originalName)}</small></span>
+          </label>
+        </li>
+      `;
+    })
+    .join("");
+  renderEditModelPickerSummary();
+};
+
+const loadEditModelCandidates = async () => {
+  if (kind !== "images") {
+    return;
+  }
+  if (!(editAuthorElement instanceof HTMLInputElement)) {
+    return;
+  }
+  if (!(editModelPickerSearchElement instanceof HTMLInputElement)) {
+    return;
+  }
+
+  const author = editAuthorElement.value.trim();
+  editModelPickerState.requestToken += 1;
+  const currentToken = editModelPickerState.requestToken;
+
+  if (author === "") {
+    editModelPickerState.models = [];
+    editModelPickerState.loading = false;
+    renderEditModelPickerOptions();
+    return;
+  }
+
+  editModelPickerState.loading = true;
+  renderEditModelPickerOptions();
+
+  const searchKeyword = editModelPickerSearchElement.value.trim();
+  const params = new URLSearchParams();
+  params.set("author", author);
+  params.set("limit", "30");
+  params.set("sort", "createdAt");
+  params.set("order", "desc");
+  if (searchKeyword !== "") {
+    params.set("q", searchKeyword);
+  }
+
+  try {
+    const response = await fetch(`/api/models?${params.toString()}`);
+    if (!response.ok) {
+      throw new Error(`候補取得に失敗しました: ${response.status}`);
+    }
+
+    const payload = await response.json();
+    if (currentToken !== editModelPickerState.requestToken) {
+      return;
+    }
+    const items = payload && typeof payload === "object" && Array.isArray(payload.items)
+      ? payload.items
+      : [];
+    editModelPickerState.models = items
+      .filter((item) => item && typeof item === "object")
+      .map((item) => ({
+        id: Number(item.id),
+        title: typeof item.title === "string" ? item.title : "モデル",
+        originalName: typeof item.originalName === "string" ? item.originalName : "",
+      }))
+      .filter((item) => Number.isInteger(item.id) && item.id > 0);
+    editModelPickerState.loading = false;
+    renderEditModelPickerOptions();
+  } catch (error) {
+    if (currentToken !== editModelPickerState.requestToken) {
+      return;
+    }
+    editModelPickerState.loading = false;
+    editModelPickerState.models = [];
+    renderEditModelPickerOptions();
+    const message =
+      error instanceof Error ? error.message : "候補モデルの取得に失敗しました。";
+    setEditModelPickerHint(message);
+  }
+};
+
+let editModelPickerDebounceTimer;
+const queueLoadEditModelCandidates = () => {
+  if (editModelPickerDebounceTimer !== undefined) {
+    window.clearTimeout(editModelPickerDebounceTimer);
+  }
+  editModelPickerDebounceTimer = window.setTimeout(() => {
+    void loadEditModelCandidates();
+  }, 220);
 };
 
 if (!pathMatch) {
@@ -397,15 +573,17 @@ const loadItem = async () => {
     if (editAuthorElement instanceof HTMLInputElement) {
       editAuthorElement.value = typeof item.author === "string" ? item.author : "";
     }
-    if (editModelIdsElement instanceof HTMLInputElement) {
-      const modelIds = Array.isArray(relatedModels)
-        ? relatedModels
-            .map((relatedModel) =>
-              relatedModel && typeof relatedModel.id === "number" ? relatedModel.id : null
-            )
-            .filter((id) => typeof id === "number")
-        : [];
-      editModelIdsElement.value = modelIds.join(",");
+    const modelIds = Array.isArray(relatedModels)
+      ? relatedModels
+          .map((relatedModel) =>
+            relatedModel && typeof relatedModel.id === "number" ? relatedModel.id : null
+          )
+          .filter((id) => typeof id === "number")
+      : [];
+    editModelPickerState.selectedIds = new Set(modelIds);
+    renderEditModelPickerSummary();
+    if (kind === "images") {
+      queueLoadEditModelCandidates();
     }
     if (editFileElement instanceof HTMLInputElement) {
       editFileElement.value = "";
@@ -421,17 +599,7 @@ const loadItem = async () => {
     originalItemState = {
       title: typeof item.title === "string" ? item.title : "",
       author: typeof item.author === "string" ? item.author : "",
-      modelIds:
-        kind === "images"
-          ? (Array.isArray(relatedModels)
-              ? relatedModels
-                  .map((relatedModel) =>
-                    relatedModel && typeof relatedModel.id === "number" ? relatedModel.id : null
-                  )
-                  .filter((id) => typeof id === "number")
-              : [])
-              .join(",")
-          : "",
+      modelIds: kind === "images" ? normalizeModelIds(modelIds) : "",
     };
 
     hideStatus();
@@ -451,10 +619,7 @@ if (
 
     const title = editTitleElement.value.trim();
     const author = editAuthorElement.value.trim();
-    const modelIdsInput =
-      kind === "images" && editModelIdsElement instanceof HTMLInputElement
-        ? editModelIdsElement.value.trim()
-        : "";
+    const modelIdsInput = kind === "images" ? normalizeModelIds(editModelPickerState.selectedIds) : "";
     const replacementFile =
       editFileElement instanceof HTMLInputElement && editFileElement.files
         ? editFileElement.files[0]
@@ -530,6 +695,55 @@ if (
       setActionPending(false);
     }
   });
+}
+
+if (
+  kind === "images" &&
+  editAuthorElement instanceof HTMLInputElement &&
+  editModelPickerSearchElement instanceof HTMLInputElement &&
+  editModelPickerOptionsElement instanceof HTMLElement
+) {
+  renderEditModelPickerSummary();
+  renderEditModelPickerOptions();
+
+  editAuthorElement.addEventListener("input", () => {
+    editModelPickerState.selectedIds.clear();
+    queueLoadEditModelCandidates();
+  });
+  editAuthorElement.addEventListener("blur", () => {
+    queueLoadEditModelCandidates();
+  });
+  editModelPickerSearchElement.addEventListener("input", () => {
+    queueLoadEditModelCandidates();
+  });
+  editModelPickerOptionsElement.addEventListener("change", (event) => {
+    if (!(event.target instanceof HTMLInputElement)) {
+      return;
+    }
+    if (event.target.type !== "checkbox") {
+      return;
+    }
+
+    const modelIdRaw = event.target.dataset.modelId;
+    const modelId = Number(modelIdRaw);
+    if (!Number.isInteger(modelId) || modelId <= 0) {
+      return;
+    }
+
+    if (event.target.checked) {
+      editModelPickerState.selectedIds.add(modelId);
+    } else {
+      editModelPickerState.selectedIds.delete(modelId);
+    }
+    renderEditModelPickerSummary();
+  });
+  if (editModelPickerElement instanceof HTMLDetailsElement) {
+    editModelPickerElement.addEventListener("toggle", () => {
+      if (editModelPickerElement.open) {
+        queueLoadEditModelCandidates();
+      }
+    });
+  }
 }
 
 if (deleteButtonElement instanceof HTMLButtonElement) {
