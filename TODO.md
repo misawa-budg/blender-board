@@ -1,13 +1,44 @@
 # TODO
 
-- [x] Add upload/storage foundation (`uploads/images`, `uploads/models`)
-- [x] Add DB migration management for media schema
-- [x] Implement multipart upload for `POST /images`
-- [x] Implement multipart upload for `POST /models`
-- [x] Secure download path handling (`/:id/download`)
-- [x] Verify with build and endpoint smoke tests
+## 現状（実装済み）
+- [x] 画像/モデルの投稿・一覧・詳細・更新・削除（基本CRUD）
+- [x] 画像プレビュー（一覧/詳細）
+- [x] モデルプレビュー（glb/gltfのみ）
+- [x] ダウンロードAPI（images/models）
+- [x] バリデーション強化（数値/アップロード実体検証）
+- [x] API契約の最小OpenAPI公開（`/api/openapi.json`）
+- [x] CI（build/test）
 
-## Additional Tasks
+## 理想との差分バックログ（Blender作品共有向け）
 
-- [x] Support file re-upload on `PATCH /images` and `PATCH /models`
-- [x] Keep DB/file consistency stronger on replace and delete flows
+### P0: 画像とモデルの関連付け（最優先）
+- [x] DB設計: `images` と `models` の中間テーブル（`image_model_links`）を追加
+- [x] API: 画像投稿/更新時に「使用モデルID一覧」を保存できるようにする
+- [x] API: 画像詳細で「この画像で使われたモデル一覧」を返す
+- [x] API: モデル詳細で「このモデルが使われている画像一覧」を返す
+- [x] UI: 画像詳細から関連モデルを直接ダウンロードできる導線を追加
+
+### P0: Blender前提のモデル運用
+- [x] 投稿仕様を明確化: `.blend` はソース、Webプレビューは `.glb/.gltf` を推奨
+- [x] モデル投稿時に「プレビュー用glb/gltf」を任意添付できる設計にする
+- [x] `.blend` 単体投稿時は「Webプレビュー未対応」表示を明示する
+
+### P1: 投稿情報の拡張（再利用しやすくする）
+- [ ] モデルにライセンス情報（商用可否/改変可否/クレジット要否）を追加
+- [ ] モデルにBlenderバージョン、使用アドオン、説明文を追加
+- [ ] 画像に説明文・制作メモ・関連タグを追加
+
+### P1: 検索・発見性
+- [ ] タグ検索（画像/モデル共通）
+- [ ] ソート拡張（新着/人気/ダウンロード数）
+- [ ] 画像からモデル、モデルから画像へ相互ナビゲーションを強化
+
+### P2: ダウンロード体験の改善
+- [ ] 画像詳細で「関連モデルをまとめて取得（zip）」機能
+- [ ] ダウンロード数の記録と表示
+- [ ] 元画像保存と派生サイズ配信（サムネイル）を分離
+
+### P2: 運用・品質
+- [ ] E2Eテスト追加（投稿→関連付け→詳細→ダウンロード）
+- [ ] ファイルサイズ/拡張子/件数の運用制限を設定可能にする
+- [ ] 不正ファイル対策（MIME再検証・ログ監視）を強化
