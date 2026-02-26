@@ -48,8 +48,8 @@ const imageSources: RemoteAsset[] = [
 
 const authors = ["Aoi", "Ren", "Mika", "Sora", "Kenta", "Hana"];
 
-const modelCount = 14;
-const imageCount = 24;
+const modelCount = 48;
+const imageCount = 120;
 
 const fetchCache = new Map<string, Buffer>();
 
