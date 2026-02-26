@@ -37,6 +37,7 @@ const modelPickerElement = document.getElementById("model-picker");
 const modelPickerSearchElement = document.getElementById("model-picker-search");
 const modelPickerHintElement = document.getElementById("model-picker-hint");
 const modelPickerOptionsElement = document.getElementById("model-picker-options");
+const galleryHeadElement = document.querySelector(".section-head");
 
 const modelPickerState = {
   selectedIds: new Set(),
@@ -50,6 +51,62 @@ const paginationState = {
   limit: 12,
   total: 0,
   totalPages: 1,
+};
+
+const createSkeletonCardHtml = () => {
+  return `
+    <article class="card card-skeleton" aria-hidden="true">
+      <div class="skeleton-box skeleton-preview"></div>
+      <div class="skeleton-box skeleton-line skeleton-line-title"></div>
+      <div class="skeleton-box skeleton-line"></div>
+      <div class="skeleton-box skeleton-line"></div>
+      <div class="skeleton-box skeleton-line skeleton-line-short"></div>
+    </article>
+  `;
+};
+
+const parsePageQuery = () => {
+  const params = new URLSearchParams(window.location.search);
+  const rawPage = params.get("page");
+  if (rawPage === null) {
+    return 1;
+  }
+  if (!/^[1-9]\d*$/.test(rawPage)) {
+    return 1;
+  }
+  const parsedPage = Number(rawPage);
+  if (!Number.isSafeInteger(parsedPage) || parsedPage < 1) {
+    return 1;
+  }
+  return parsedPage;
+};
+
+const syncPageToUrl = (page, options = {}) => {
+  const replace = options.replace ?? false;
+  const params = new URLSearchParams(window.location.search);
+  if (page <= 1) {
+    params.delete("page");
+  } else {
+    params.set("page", String(page));
+  }
+  const nextSearch = params.toString();
+  const nextPath = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ""}${window.location.hash}`;
+  const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  if (nextPath === currentPath) {
+    return;
+  }
+  if (replace) {
+    window.history.replaceState(null, "", nextPath);
+    return;
+  }
+  window.history.pushState(null, "", nextPath);
+};
+
+const scrollToGalleryHead = () => {
+  if (!(galleryHeadElement instanceof HTMLElement)) {
+    return;
+  }
+  galleryHeadElement.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 
 const formatDate = (value) => {
@@ -156,10 +213,34 @@ const renderPagination = () => {
   nextPageButtonElement.disabled = paginationState.page >= paginationState.totalPages;
 };
 
+const renderLoadingState = (targetPage) => {
+  countElement.textContent = "読み込み中...";
+  emptyElement.classList.add("hidden");
+  gridElement.classList.add("is-loading");
+  gridElement.innerHTML = Array.from({ length: paginationState.limit }, () => createSkeletonCardHtml()).join("");
+
+  if (
+    paginationElement instanceof HTMLElement &&
+    pageInfoElement instanceof HTMLElement &&
+    prevPageButtonElement instanceof HTMLButtonElement &&
+    nextPageButtonElement instanceof HTMLButtonElement
+  ) {
+    paginationElement.classList.remove("hidden");
+    pageInfoElement.textContent = `${targetPage} ページを読み込み中...`;
+    prevPageButtonElement.disabled = true;
+    nextPageButtonElement.disabled = true;
+  }
+};
+
 const renderItems = (items) => {
+  gridElement.classList.remove("is-loading");
   countElement.textContent = `${paginationState.total} 件`;
   if (items.length === 0) {
     gridElement.innerHTML = "";
+    emptyElement.textContent =
+      paginationState.total === 0
+        ? `${config.label}投稿はまだありません。`
+        : "このページには投稿がありません。";
     emptyElement.classList.remove("hidden");
     renderPagination();
     return;
@@ -171,6 +252,7 @@ const renderItems = (items) => {
 };
 
 const renderError = (message) => {
+  gridElement.classList.remove("is-loading");
   countElement.textContent = "エラー";
   emptyElement.classList.remove("hidden");
   emptyElement.textContent = message;
@@ -358,7 +440,13 @@ const queueLoadAuthorModels = () => {
   }, 220);
 };
 
-const loadItems = async (targetPage = paginationState.page) => {
+const loadItems = async (targetPage = paginationState.page, options = {}) => {
+  const updateUrl = options.updateUrl ?? true;
+  const replaceUrl = options.replaceUrl ?? false;
+  const scrollAfterLoad = options.scrollAfterLoad ?? false;
+
+  renderLoadingState(targetPage);
+
   try {
     const params = new URLSearchParams();
     params.set("limit", String(paginationState.limit));
@@ -393,11 +481,17 @@ const loadItems = async (targetPage = paginationState.page) => {
       paginationState.total > 0 &&
       paginationState.page > paginationState.totalPages
     ) {
-      await loadItems(paginationState.totalPages);
+      await loadItems(paginationState.totalPages, options);
       return;
     }
 
     renderItems(items);
+    if (updateUrl) {
+      syncPageToUrl(paginationState.page, { replace: replaceUrl });
+    }
+    if (scrollAfterLoad) {
+      scrollToGalleryHead();
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : "一覧の取得に失敗しました。";
     renderError(message);
@@ -453,14 +547,14 @@ if (
     if (paginationState.page <= 1) {
       return;
     }
-    void loadItems(paginationState.page - 1);
+    void loadItems(paginationState.page - 1, { scrollAfterLoad: true });
   });
 
   nextPageButtonElement.addEventListener("click", () => {
     if (paginationState.page >= paginationState.totalPages) {
       return;
     }
-    void loadItems(paginationState.page + 1);
+    void loadItems(paginationState.page + 1, { scrollAfterLoad: true });
   });
 }
 
@@ -523,7 +617,7 @@ if (
       modelPickerState.models = [];
       renderModelPickerOptions();
       setFormStatus("投稿が完了しました。", "success");
-      await loadItems(1);
+      await loadItems(1, { replaceUrl: true, scrollAfterLoad: true });
     } catch (error) {
       const message = error instanceof Error ? error.message : "アップロードに失敗しました。";
       setFormStatus(message, "error");
@@ -581,4 +675,12 @@ if (
   }
 }
 
-void loadItems();
+window.addEventListener("popstate", () => {
+  const pageFromUrl = parsePageQuery();
+  paginationState.page = pageFromUrl;
+  void loadItems(pageFromUrl, { updateUrl: false });
+});
+
+const initialPage = parsePageQuery();
+paginationState.page = initialPage;
+void loadItems(initialPage, { replaceUrl: true });
