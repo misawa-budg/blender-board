@@ -2,10 +2,11 @@ import { existsSync, unlinkSync } from "node:fs";
 import { Router } from "express";
 import {
   createImage,
-  deleteImage,
+  deleteImageWithHook,
   findImageById,
   listImages,
   updateImage,
+  updateImageWithHook,
 } from "../features/images/service.js";
 import { uploadImageFile } from "../middlewares/upload.js";
 import {
@@ -15,7 +16,7 @@ import {
   validateUpdateMediaInput,
 } from "../utils/validators.js";
 import { createHttpError } from "../utils/httpError.js";
-import { resolveStoredFilePath } from "../utils/storage.js";
+import { deleteStoredFile, resolveStoredFilePath } from "../utils/storage.js";
 
 const router = Router();
 
@@ -72,19 +73,72 @@ router.post("/", uploadImageFile, (req, res) => {
   return res.status(201).json({ item: createdImage });
 });
 
-router.patch("/:id", (req, res) => {
-  const imageId = parsePositiveInt(req.params.id);
-  if (imageId === null) {
+router.patch("/:id", uploadImageFile, (req, res) => {
+  const imageIdParam = req.params.id;
+  if (typeof imageIdParam !== "string") {
+    if (req.file && existsSync(req.file.path)) {
+      unlinkSync(req.file.path);
+    }
     throw createHttpError(400, "id must be a positive integer.");
   }
 
-  const validationResult = validateUpdateMediaInput(req.body as unknown);
+  const imageId = parsePositiveInt(imageIdParam);
+  if (imageId === null) {
+    if (req.file && existsSync(req.file.path)) {
+      unlinkSync(req.file.path);
+    }
+    throw createHttpError(400, "id must be a positive integer.");
+  }
+
+  const validationResult = validateUpdateMediaInput(req.body as unknown, {
+    requireAtLeastOne: req.file === undefined,
+  });
   if (!validationResult.ok) {
+    if (req.file && existsSync(req.file.path)) {
+      unlinkSync(req.file.path);
+    }
     throw createHttpError(400, validationResult.message);
   }
 
-  const updatedImage = updateImage(imageId, validationResult.value);
+  let updatedImage;
+  try {
+    if (req.file) {
+      const updatePayload: Parameters<typeof updateImageWithHook>[1] = {
+        storedPath: req.file.filename,
+        originalName: req.file.originalname,
+        mimeType: req.file.mimetype || "application/octet-stream",
+        fileSize: req.file.size,
+      };
+      if (validationResult.value.title !== undefined) {
+        updatePayload.title = validationResult.value.title;
+      }
+      if (validationResult.value.author !== undefined) {
+        updatePayload.author = validationResult.value.author;
+      }
+
+      updatedImage = updateImageWithHook(
+        imageId,
+        updatePayload,
+        ({ previous, current }) => {
+          if (previous.storedPath !== current.storedPath) {
+            deleteStoredFile("images", previous.storedPath, { ignoreMissing: true });
+          }
+        }
+      );
+    } else {
+      updatedImage = updateImage(imageId, validationResult.value);
+    }
+  } catch (error) {
+    if (req.file && existsSync(req.file.path)) {
+      unlinkSync(req.file.path);
+    }
+    throw error;
+  }
+
   if (!updatedImage) {
+    if (req.file && existsSync(req.file.path)) {
+      unlinkSync(req.file.path);
+    }
     throw createHttpError(404, "Image not found.");
   }
 
@@ -97,7 +151,9 @@ router.delete("/:id", (req, res) => {
     throw createHttpError(400, "id must be a positive integer.");
   }
 
-  const deleted = deleteImage(imageId);
+  const deleted = deleteImageWithHook(imageId, (image) => {
+    deleteStoredFile("images", image.storedPath, { ignoreMissing: true });
+  });
   if (!deleted) {
     throw createHttpError(404, "Image not found.");
   }

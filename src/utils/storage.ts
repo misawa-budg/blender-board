@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, unlinkSync } from "node:fs";
 import { join, resolve, sep } from "node:path";
 import { createHttpError } from "./httpError.js";
 
@@ -29,4 +29,20 @@ export const resolveStoredFilePath = (kind: MediaKind, storedPath: string): stri
   }
 
   return absolutePath;
+};
+
+export const deleteStoredFile = (
+  kind: MediaKind,
+  storedPath: string,
+  options: { ignoreMissing?: boolean } = {}
+): void => {
+  const targetPath = resolveStoredFilePath(kind, storedPath);
+  if (!existsSync(targetPath)) {
+    if (options.ignoreMissing) {
+      return;
+    }
+    throw createHttpError(404, "Stored file not found.");
+  }
+
+  unlinkSync(targetPath);
 };

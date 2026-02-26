@@ -2,10 +2,11 @@ import { existsSync, unlinkSync } from "node:fs";
 import { Router } from "express";
 import {
   createModel,
-  deleteModel,
+  deleteModelWithHook,
   findModelById,
   listModels,
   updateModel,
+  updateModelWithHook,
 } from "../features/models/service.js";
 import { uploadModelFile } from "../middlewares/upload.js";
 import {
@@ -15,7 +16,7 @@ import {
   validateUpdateMediaInput,
 } from "../utils/validators.js";
 import { createHttpError } from "../utils/httpError.js";
-import { resolveStoredFilePath } from "../utils/storage.js";
+import { deleteStoredFile, resolveStoredFilePath } from "../utils/storage.js";
 
 const router = Router();
 
@@ -72,19 +73,72 @@ router.post("/", uploadModelFile, (req, res) => {
   return res.status(201).json({ item: createdModel });
 });
 
-router.patch("/:id", (req, res) => {
-  const modelId = parsePositiveInt(req.params.id);
-  if (modelId === null) {
+router.patch("/:id", uploadModelFile, (req, res) => {
+  const modelIdParam = req.params.id;
+  if (typeof modelIdParam !== "string") {
+    if (req.file && existsSync(req.file.path)) {
+      unlinkSync(req.file.path);
+    }
     throw createHttpError(400, "id must be a positive integer.");
   }
 
-  const validationResult = validateUpdateMediaInput(req.body as unknown);
+  const modelId = parsePositiveInt(modelIdParam);
+  if (modelId === null) {
+    if (req.file && existsSync(req.file.path)) {
+      unlinkSync(req.file.path);
+    }
+    throw createHttpError(400, "id must be a positive integer.");
+  }
+
+  const validationResult = validateUpdateMediaInput(req.body as unknown, {
+    requireAtLeastOne: req.file === undefined,
+  });
   if (!validationResult.ok) {
+    if (req.file && existsSync(req.file.path)) {
+      unlinkSync(req.file.path);
+    }
     throw createHttpError(400, validationResult.message);
   }
 
-  const updatedModel = updateModel(modelId, validationResult.value);
+  let updatedModel;
+  try {
+    if (req.file) {
+      const updatePayload: Parameters<typeof updateModelWithHook>[1] = {
+        storedPath: req.file.filename,
+        originalName: req.file.originalname,
+        mimeType: req.file.mimetype || "application/octet-stream",
+        fileSize: req.file.size,
+      };
+      if (validationResult.value.title !== undefined) {
+        updatePayload.title = validationResult.value.title;
+      }
+      if (validationResult.value.author !== undefined) {
+        updatePayload.author = validationResult.value.author;
+      }
+
+      updatedModel = updateModelWithHook(
+        modelId,
+        updatePayload,
+        ({ previous, current }) => {
+          if (previous.storedPath !== current.storedPath) {
+            deleteStoredFile("models", previous.storedPath, { ignoreMissing: true });
+          }
+        }
+      );
+    } else {
+      updatedModel = updateModel(modelId, validationResult.value);
+    }
+  } catch (error) {
+    if (req.file && existsSync(req.file.path)) {
+      unlinkSync(req.file.path);
+    }
+    throw error;
+  }
+
   if (!updatedModel) {
+    if (req.file && existsSync(req.file.path)) {
+      unlinkSync(req.file.path);
+    }
     throw createHttpError(404, "Model not found.");
   }
 
@@ -97,7 +151,9 @@ router.delete("/:id", (req, res) => {
     throw createHttpError(400, "id must be a positive integer.");
   }
 
-  const deleted = deleteModel(modelId);
+  const deleted = deleteModelWithHook(modelId, (model) => {
+    deleteStoredFile("models", model.storedPath, { ignoreMissing: true });
+  });
   if (!deleted) {
     throw createHttpError(404, "Model not found.");
   }

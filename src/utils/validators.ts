@@ -15,6 +15,10 @@ export type MediaUpdateInput = {
   author?: string;
 };
 
+type ValidateUpdateMediaInputOptions = {
+  requireAtLeastOne?: boolean;
+};
+
 export const parsePositiveInt = (value: string): number | null => {
   const parsedValue = Number.parseInt(value, 10);
   if (Number.isNaN(parsedValue) || parsedValue <= 0) {
@@ -83,8 +87,11 @@ export const validateCreateMediaInput = (
 };
 
 export const validateUpdateMediaInput = (
-  value: unknown
+  value: unknown,
+  options: ValidateUpdateMediaInputOptions = {}
 ): ValidationResult<MediaUpdateInput> => {
+  const requireAtLeastOne = options.requireAtLeastOne ?? true;
+
   if (typeof value !== "object" || value === null) {
     return { ok: false, message: "Request body must be an object." };
   }
@@ -106,7 +113,7 @@ export const validateUpdateMediaInput = (
     result.author = candidate.author.trim();
   }
 
-  if (Object.keys(result).length === 0) {
+  if (requireAtLeastOne && Object.keys(result).length === 0) {
     return { ok: false, message: "At least one of title or author is required." };
   }
 

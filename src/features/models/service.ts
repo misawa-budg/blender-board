@@ -13,12 +13,24 @@ export type CreateModelInput = {
 export type UpdateModelInput = {
   title?: string;
   author?: string;
+  storedPath?: string;
+  originalName?: string;
+  mimeType?: string;
+  fileSize?: number;
 };
 
 export type ListModelsOptions = {
   q?: string;
   limit?: number;
 };
+
+type UpdateModelHookArgs = {
+  previous: Model;
+  current: Model;
+};
+
+type UpdateModelHook = (args: UpdateModelHookArgs) => void;
+type DeleteModelHook = (model: Model) => void;
 
 const MODEL_SELECT_SQL = `
   SELECT
@@ -95,14 +107,14 @@ export const createModel = (input: CreateModelInput): Model => {
   return createdModel;
 };
 
-export const updateModel = (id: number, input: UpdateModelInput): Model | undefined => {
-  const existingModel = findModelById(id);
-  if (!existingModel) {
+const updateModelInTransaction = (id: number, input: UpdateModelInput): Model | undefined => {
+  const previousModel = findModelById(id);
+  if (!previousModel) {
     return undefined;
   }
 
   const fields: string[] = [];
-  const values: string[] = [];
+  const values: Array<string | number> = [];
 
   if (input.title !== undefined) {
     fields.push("title = ?");
@@ -112,15 +124,78 @@ export const updateModel = (id: number, input: UpdateModelInput): Model | undefi
     fields.push("author = ?");
     values.push(input.author);
   }
-
-  if (fields.length > 0) {
-    db.prepare(`UPDATE models SET ${fields.join(", ")} WHERE id = ?`).run(...values, id);
+  if (input.storedPath !== undefined) {
+    fields.push("stored_path = ?");
+    values.push(input.storedPath);
+  }
+  if (input.originalName !== undefined) {
+    fields.push("original_name = ?");
+    values.push(input.originalName);
+  }
+  if (input.mimeType !== undefined) {
+    fields.push("mime_type = ?");
+    values.push(input.mimeType);
+  }
+  if (input.fileSize !== undefined) {
+    fields.push("file_size = ?");
+    values.push(input.fileSize);
   }
 
+  if (fields.length === 0) {
+    return previousModel;
+  }
+
+  db.prepare(`UPDATE models SET ${fields.join(", ")} WHERE id = ?`).run(...values, id);
   return findModelById(id);
+};
+
+export const updateModel = (id: number, input: UpdateModelInput): Model | undefined => {
+  const runUpdate = db.transaction(() => {
+    return updateModelInTransaction(id, input);
+  });
+
+  return runUpdate();
 };
 
 export const deleteModel = (id: number): boolean => {
   const deleteResult = db.prepare("DELETE FROM models WHERE id = ?").run(id);
   return deleteResult.changes > 0;
+};
+
+export const updateModelWithHook = (
+  id: number,
+  input: UpdateModelInput,
+  hook: UpdateModelHook
+): Model | undefined => {
+  const runUpdate = db.transaction(() => {
+    const previousModel = findModelById(id);
+    if (!previousModel) {
+      return undefined;
+    }
+
+    const updatedModel = updateModelInTransaction(id, input);
+    if (!updatedModel) {
+      return undefined;
+    }
+
+    hook({ previous: previousModel, current: updatedModel });
+    return updatedModel;
+  });
+
+  return runUpdate();
+};
+
+export const deleteModelWithHook = (id: number, hook: DeleteModelHook): boolean => {
+  const runDelete = db.transaction(() => {
+    const targetModel = findModelById(id);
+    if (!targetModel) {
+      return false;
+    }
+
+    db.prepare("DELETE FROM models WHERE id = ?").run(id);
+    hook(targetModel);
+    return true;
+  });
+
+  return runDelete();
 };
