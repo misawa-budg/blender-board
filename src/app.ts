@@ -16,8 +16,16 @@ app.get("/images", (_req, res) => {
   return res.sendFile(resolve(process.cwd(), "public/images.html"));
 });
 
+app.get("/images/:id", (_req, res) => {
+  return res.sendFile(resolve(process.cwd(), "public/detail.html"));
+});
+
 app.get("/models", (_req, res) => {
   return res.sendFile(resolve(process.cwd(), "public/models.html"));
+});
+
+app.get("/models/:id", (_req, res) => {
+  return res.sendFile(resolve(process.cwd(), "public/detail.html"));
 });
 
 app.use("/", rootRouter);

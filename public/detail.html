@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blender Board | Detail</title>
+    <link rel="stylesheet" href="/styles/board.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="hero">
+        <p class="eyebrow">Blender Board</p>
+        <h1 id="detail-heading">Detail</h1>
+        <p id="detail-description" class="description"></p>
+      </header>
+
+      <main>
+        <nav class="tabs" aria-label="Gallery tabs">
+          <a id="tab-images" class="tab-link" href="/images">Images</a>
+          <a id="tab-models" class="tab-link" href="/models">Models</a>
+        </nav>
+
+        <section class="detail-panel">
+          <div id="detail-status" class="status hidden" aria-live="polite"></div>
+
+          <article id="detail-card" class="detail-card hidden">
+            <h2 id="item-title" class="detail-title"></h2>
+            <dl class="detail-grid">
+              <dt>ID</dt>
+              <dd id="item-id"></dd>
+              <dt>Author</dt>
+              <dd id="item-author"></dd>
+              <dt>Created</dt>
+              <dd id="item-created"></dd>
+              <dt>Original Name</dt>
+              <dd id="item-original-name"></dd>
+              <dt>MIME Type</dt>
+              <dd id="item-mime-type"></dd>
+              <dt>File Size</dt>
+              <dd id="item-file-size"></dd>
+            </dl>
+
+            <div class="detail-actions">
+              <a id="download-link" class="download-link" href="#">Download</a>
+              <a id="back-link" class="tab-link" href="/images">Back to list</a>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <script src="/scripts/detail.js" defer></script>
+  </body>
+</html>

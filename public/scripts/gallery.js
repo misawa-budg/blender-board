@@ -4,10 +4,12 @@ const galleryConfig = {
   images: {
     endpoint: "/api/images",
     label: "Image",
+    detailPrefix: "/images",
   },
   models: {
     endpoint: "/api/models",
     label: "Model",
+    detailPrefix: "/models",
   },
 };
 
@@ -41,6 +43,7 @@ const escapeHtml = (value) => {
 };
 
 const renderCard = (item) => {
+  const detailUrl = `${config.detailPrefix}/${item.id}`;
   return `
     <article class="card">
       <h3 class="card-title">${escapeHtml(item.title)}</h3>
@@ -48,7 +51,10 @@ const renderCard = (item) => {
       <p class="meta">by ${escapeHtml(item.author)}</p>
       <p class="meta">${formatDate(item.createdAt)}</p>
       <p class="meta">${escapeHtml(item.originalName)}</p>
-      <a class="download-link" href="${item.downloadUrl}">Download</a>
+      <div class="card-actions">
+        <a class="detail-link" href="${detailUrl}">Detail</a>
+        <a class="download-link" href="${item.downloadUrl}">Download</a>
+      </div>
     </article>
   `;
 };
