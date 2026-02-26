@@ -17,8 +17,33 @@ import {
 } from "../utils/validators.js";
 import { createHttpError } from "../utils/httpError.js";
 import { deleteStoredFile, resolveStoredFilePath } from "../utils/storage.js";
+import type { Model } from "../types/entities.js";
 
 const router = Router();
+
+type ModelListItemResponse = {
+  id: number;
+  title: string;
+  author: string;
+  createdAt: string;
+  originalName: string;
+  mimeType: string;
+  fileSize: number;
+  downloadUrl: string;
+};
+
+const toModelListItemResponse = (model: Model): ModelListItemResponse => {
+  return {
+    id: model.id,
+    title: model.title,
+    author: model.author,
+    createdAt: model.createdAt,
+    originalName: model.originalName,
+    mimeType: model.mimeType,
+    fileSize: model.fileSize,
+    downloadUrl: `/models/${model.id}/download`,
+  };
+};
 
 router.get("/", (req, res) => {
   const queryValidation = validateListQuery(req.query as unknown);
@@ -26,7 +51,8 @@ router.get("/", (req, res) => {
     throw createHttpError(400, queryValidation.message);
   }
 
-  return res.json({ items: listModels(queryValidation.value) });
+  const items = listModels(queryValidation.value).map(toModelListItemResponse);
+  return res.json({ items });
 });
 
 router.get("/:id", (req, res) => {
@@ -40,7 +66,7 @@ router.get("/:id", (req, res) => {
     throw createHttpError(404, "Model not found.");
   }
 
-  return res.json({ item: model });
+  return res.json({ item: toModelListItemResponse(model) });
 });
 
 router.post("/", uploadModelFile, (req, res) => {
@@ -70,7 +96,7 @@ router.post("/", uploadModelFile, (req, res) => {
     throw error;
   }
 
-  return res.status(201).json({ item: createdModel });
+  return res.status(201).json({ item: toModelListItemResponse(createdModel) });
 });
 
 router.patch("/:id", uploadModelFile, (req, res) => {
@@ -142,7 +168,7 @@ router.patch("/:id", uploadModelFile, (req, res) => {
     throw createHttpError(404, "Model not found.");
   }
 
-  return res.json({ item: updatedModel });
+  return res.json({ item: toModelListItemResponse(updatedModel) });
 });
 
 router.delete("/:id", (req, res) => {

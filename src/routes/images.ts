@@ -17,8 +17,33 @@ import {
 } from "../utils/validators.js";
 import { createHttpError } from "../utils/httpError.js";
 import { deleteStoredFile, resolveStoredFilePath } from "../utils/storage.js";
+import type { Image } from "../types/entities.js";
 
 const router = Router();
+
+type ImageListItemResponse = {
+  id: number;
+  title: string;
+  author: string;
+  createdAt: string;
+  originalName: string;
+  mimeType: string;
+  fileSize: number;
+  downloadUrl: string;
+};
+
+const toImageListItemResponse = (image: Image): ImageListItemResponse => {
+  return {
+    id: image.id,
+    title: image.title,
+    author: image.author,
+    createdAt: image.createdAt,
+    originalName: image.originalName,
+    mimeType: image.mimeType,
+    fileSize: image.fileSize,
+    downloadUrl: `/images/${image.id}/download`,
+  };
+};
 
 router.get("/", (req, res) => {
   const queryValidation = validateListQuery(req.query as unknown);
@@ -26,7 +51,8 @@ router.get("/", (req, res) => {
     throw createHttpError(400, queryValidation.message);
   }
 
-  return res.json({ items: listImages(queryValidation.value) });
+  const items = listImages(queryValidation.value).map(toImageListItemResponse);
+  return res.json({ items });
 });
 
 router.get("/:id", (req, res) => {
@@ -40,7 +66,7 @@ router.get("/:id", (req, res) => {
     throw createHttpError(404, "Image not found.");
   }
 
-  return res.json({ item: image });
+  return res.json({ item: toImageListItemResponse(image) });
 });
 
 router.post("/", uploadImageFile, (req, res) => {
@@ -70,7 +96,7 @@ router.post("/", uploadImageFile, (req, res) => {
     throw error;
   }
 
-  return res.status(201).json({ item: createdImage });
+  return res.status(201).json({ item: toImageListItemResponse(createdImage) });
 });
 
 router.patch("/:id", uploadImageFile, (req, res) => {
@@ -142,7 +168,7 @@ router.patch("/:id", uploadImageFile, (req, res) => {
     throw createHttpError(404, "Image not found.");
   }
 
-  return res.json({ item: updatedImage });
+  return res.json({ item: toImageListItemResponse(updatedImage) });
 });
 
 router.delete("/:id", (req, res) => {
