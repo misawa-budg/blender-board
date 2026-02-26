@@ -98,6 +98,47 @@ test("拡張子偽装ファイルを拒否する", async () => {
   assert.equal(payload.code, "invalid_file_signature");
 });
 
+test("画像差し替え時にpreviewUrlが更新される", async () => {
+  const firstImagePath = createTempFile(
+    "preview-refresh-a.png",
+    Buffer.concat([pngSignature, Buffer.from("AAAA")])
+  );
+  const secondImagePath = createTempFile(
+    "preview-refresh-b.png",
+    Buffer.concat([pngSignature, Buffer.from("BBBB")])
+  );
+
+  const created = await api
+    .post("/api/images")
+    .field("title", "preview-refresh")
+    .field("author", "tester")
+    .attach("file", firstImagePath);
+  assert.equal(created.status, 201);
+
+  const createdItem = (created.body as { item?: Record<string, unknown> }).item;
+  assert.equal(typeof createdItem, "object");
+  assert.notEqual(createdItem, null);
+  const imageId = Number((createdItem as Record<string, unknown>).id);
+  const firstPreviewUrl = (createdItem as Record<string, unknown>).previewUrl;
+  assert.equal(typeof firstPreviewUrl, "string");
+  assert.match(firstPreviewUrl as string, /\?v=/);
+
+  const patched = await api
+    .patch(`/api/images/${imageId}`)
+    .field("title", "preview-refresh")
+    .field("author", "tester")
+    .attach("file", secondImagePath);
+  assert.equal(patched.status, 200);
+
+  const patchedItem = (patched.body as { item?: Record<string, unknown> }).item;
+  assert.equal(typeof patchedItem, "object");
+  assert.notEqual(patchedItem, null);
+  const secondPreviewUrl = (patchedItem as Record<string, unknown>).previewUrl;
+  assert.equal(typeof secondPreviewUrl, "string");
+  assert.match(secondPreviewUrl as string, /\?v=/);
+  assert.notEqual(secondPreviewUrl, firstPreviewUrl);
+});
+
 test("OpenAPI定義を返す", async () => {
   const response = await api.get("/api/openapi.json");
   assert.equal(response.status, 200);

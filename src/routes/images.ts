@@ -1,4 +1,5 @@
 import { existsSync, unlinkSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { Router } from "express";
 import {
   createImage,
@@ -22,6 +23,10 @@ import type { Image } from "../types/entities.js";
 
 const router = Router();
 
+const createPreviewVersion = (storedPath: string): string => {
+  return createHash("sha1").update(storedPath).digest("hex").slice(0, 12);
+};
+
 type ImageListItemResponse = {
   id: number;
   title: string;
@@ -35,6 +40,7 @@ type ImageListItemResponse = {
 };
 
 const toImageListItemResponse = (image: Image): ImageListItemResponse => {
+  const previewVersion = createPreviewVersion(image.storedPath);
   return {
     id: image.id,
     title: image.title,
@@ -43,7 +49,7 @@ const toImageListItemResponse = (image: Image): ImageListItemResponse => {
     originalName: image.originalName,
     mimeType: image.mimeType,
     fileSize: image.fileSize,
-    previewUrl: `/api/images/${image.id}/preview`,
+    previewUrl: `/api/images/${image.id}/preview?v=${previewVersion}`,
     downloadUrl: `/api/images/${image.id}/download`,
   };
 };
