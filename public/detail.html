@@ -22,6 +22,7 @@
 
         <section class="detail-panel">
           <div id="detail-status" class="status hidden" aria-live="polite"></div>
+          <div id="action-status" class="status hidden" aria-live="polite"></div>
 
           <article id="detail-card" class="detail-card hidden">
             <h2 id="item-title" class="detail-title"></h2>
@@ -44,6 +45,30 @@
               <a id="download-link" class="download-link" href="#">Download</a>
               <a id="back-link" class="tab-link" href="/images">Back to list</a>
             </div>
+
+            <section class="detail-edit">
+              <h3>Edit</h3>
+              <form id="edit-form" class="upload-form" enctype="multipart/form-data">
+                <div class="form-grid">
+                  <label class="field">
+                    <span>Title</span>
+                    <input id="edit-title" name="title" type="text" maxlength="120" required />
+                  </label>
+                  <label class="field">
+                    <span>Author</span>
+                    <input id="edit-author" name="author" type="text" maxlength="120" required />
+                  </label>
+                  <label class="field field-file">
+                    <span>Replace file (optional)</span>
+                    <input id="edit-file" name="file" type="file" />
+                  </label>
+                </div>
+                <div class="detail-edit-actions">
+                  <button id="save-button" type="submit">Save</button>
+                  <button id="delete-button" class="danger-button" type="button">Delete</button>
+                </div>
+              </form>
+            </section>
           </article>
         </section>
       </main>

@@ -45,14 +45,13 @@ const escapeHtml = (value) => {
 const renderCard = (item) => {
   const detailUrl = `${config.detailPrefix}/${item.id}`;
   return `
-    <article class="card">
+    <article class="card card-clickable" data-detail-url="${detailUrl}" tabindex="0" role="link" aria-label="Open detail: ${escapeHtml(item.title)}">
       <h3 class="card-title">${escapeHtml(item.title)}</h3>
       <p class="meta">${config.label}</p>
       <p class="meta">by ${escapeHtml(item.author)}</p>
       <p class="meta">${formatDate(item.createdAt)}</p>
       <p class="meta">${escapeHtml(item.originalName)}</p>
       <div class="card-actions">
-        <a class="detail-link" href="${detailUrl}">Detail</a>
         <a class="download-link" href="${item.downloadUrl}">Download</a>
       </div>
     </article>
@@ -111,6 +110,47 @@ const loadItems = async () => {
     renderError(message);
   }
 };
+
+if (gridElement instanceof HTMLElement) {
+  gridElement.addEventListener("click", (event) => {
+    if (!(event.target instanceof Element)) {
+      return;
+    }
+    if (event.target.closest("a, button, input, textarea, select, label")) {
+      return;
+    }
+
+    const cardElement = event.target.closest(".card-clickable");
+    if (!(cardElement instanceof HTMLElement)) {
+      return;
+    }
+    const detailUrl = cardElement.dataset.detailUrl;
+    if (!detailUrl) {
+      return;
+    }
+
+    window.location.assign(detailUrl);
+  });
+
+  gridElement.addEventListener("keydown", (event) => {
+    if (!(event.target instanceof HTMLElement)) {
+      return;
+    }
+    if (!event.target.classList.contains("card-clickable")) {
+      return;
+    }
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    event.preventDefault();
+    const detailUrl = event.target.dataset.detailUrl;
+    if (!detailUrl) {
+      return;
+    }
+    window.location.assign(detailUrl);
+  });
+}
 
 if (
   uploadFormElement instanceof HTMLFormElement &&

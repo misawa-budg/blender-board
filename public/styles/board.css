@@ -190,6 +190,15 @@ body {
   min-height: 180px;
 }
 
+.card-clickable {
+  cursor: pointer;
+}
+
+.card-clickable:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .card-title {
   margin: 0;
   font-size: 1.05rem;
@@ -207,7 +216,6 @@ body {
   color: var(--muted);
 }
 
-.detail-link,
 .download-link {
   text-decoration: none;
   color: var(--accent);
@@ -252,6 +260,41 @@ body {
   display: flex;
   align-items: center;
   gap: 0.8rem;
+}
+
+.detail-edit {
+  border-top: 1px solid var(--line);
+  padding-top: 1rem;
+}
+
+.detail-edit h3 {
+  margin: 0 0 0.8rem;
+  font-size: 1.05rem;
+}
+
+.detail-edit-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.detail-edit-actions button {
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+}
+
+.detail-edit-actions button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.detail-edit-actions .danger-button {
+  background: #b02020;
 }
 
 .empty {
