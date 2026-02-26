@@ -4,7 +4,7 @@ import { createHttpError } from "./httpError.js";
 
 export type MediaKind = "images" | "models";
 
-const uploadsRootPath = resolve(process.cwd(), "uploads");
+const uploadsRootPath = resolve(process.cwd(), process.env.BLENDER_BOARD_UPLOAD_ROOT ?? "uploads");
 const uploadDirByKind: Record<MediaKind, string> = {
   images: join(uploadsRootPath, "images"),
   models: join(uploadsRootPath, "models"),
