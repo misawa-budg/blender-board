@@ -41,7 +41,7 @@ const toImageListItemResponse = (image: Image): ImageListItemResponse => {
     originalName: image.originalName,
     mimeType: image.mimeType,
     fileSize: image.fileSize,
-    downloadUrl: `/images/${image.id}/download`,
+    downloadUrl: `/api/images/${image.id}/download`,
   };
 };
 

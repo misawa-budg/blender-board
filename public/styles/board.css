@@ -72,7 +72,8 @@ body {
   margin-bottom: 1rem;
 }
 
-.tab-button {
+.tab-button,
+.tab-link {
   border: 0;
   background: transparent;
   padding: 0.5rem 0.85rem;
@@ -80,9 +81,11 @@ body {
   color: var(--muted);
   cursor: pointer;
   font-weight: 600;
+  text-decoration: none;
 }
 
-.tab-button.is-active {
+.tab-button.is-active,
+.tab-link.is-active {
   background: var(--accent);
   color: #fff;
 }

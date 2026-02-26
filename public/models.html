@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blender Board | Models</title>
+    <link rel="stylesheet" href="/styles/board.css" />
+  </head>
+  <body data-kind="models">
+    <div class="page">
+      <header class="hero">
+        <p class="eyebrow">Blender Board</p>
+        <h1>Models</h1>
+        <p class="description">Browse 3D model posts from creators.</p>
+      </header>
+
+      <main>
+        <nav class="tabs" aria-label="Gallery tabs">
+          <a class="tab-link" href="/images">Images</a>
+          <a class="tab-link is-active" href="/models">Models</a>
+        </nav>
+
+        <section>
+          <div class="section-head">
+            <h2>Model Gallery</h2>
+            <span id="items-count" class="count">loading...</span>
+          </div>
+          <div id="items-grid" class="card-grid"></div>
+          <p id="items-empty" class="empty hidden">No models posted yet.</p>
+        </section>
+      </main>
+    </div>
+
+    <script src="/scripts/gallery.js" defer></script>
+  </body>
+</html>

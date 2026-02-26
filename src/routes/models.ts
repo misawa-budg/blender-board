@@ -41,7 +41,7 @@ const toModelListItemResponse = (model: Model): ModelListItemResponse => {
     originalName: model.originalName,
     mimeType: model.mimeType,
     fileSize: model.fileSize,
-    downloadUrl: `/models/${model.id}/download`,
+    downloadUrl: `/api/models/${model.id}/download`,
   };
 };
 
