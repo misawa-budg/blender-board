@@ -1,4 +1,5 @@
-import { mockImages, type Image } from "../../mockObjects.js";
+import { db } from "../../db/database.js";
+import type { Image } from "../../mockObjects.js";
 
 export type CreateImageInput = {
   title: string;
@@ -17,73 +18,90 @@ export type ListImagesOptions = {
   limit?: number;
 };
 
-const images: Image[] = [...mockImages];
-let nextImageId =
-  images.reduce((currentMax, image) => Math.max(currentMax, image.id), 0) + 1;
+const IMAGE_SELECT_SQL = `
+  SELECT
+    id,
+    title,
+    author,
+    created_at AS createdAt,
+    filename
+  FROM images
+`;
 
 export const listImages = (options: ListImagesOptions = {}): Image[] => {
-  let result = [...images];
+  let sql = IMAGE_SELECT_SQL;
+  const parameters: Array<string | number> = [];
 
   if (options.q) {
-    const loweredKeyword = options.q.toLowerCase();
-    result = result.filter((image) => {
-      return (
-        image.title.toLowerCase().includes(loweredKeyword) ||
-        image.author.toLowerCase().includes(loweredKeyword)
-      );
-    });
+    const loweredKeyword = `%${options.q.toLowerCase()}%`;
+    sql += " WHERE (LOWER(title) LIKE ? OR LOWER(author) LIKE ?)";
+    parameters.push(loweredKeyword, loweredKeyword);
   }
+
+  sql += " ORDER BY id DESC";
 
   if (typeof options.limit === "number") {
-    result = result.slice(0, options.limit);
+    sql += " LIMIT ?";
+    parameters.push(options.limit);
   }
 
-  return result;
+  return db.prepare(sql).all(...parameters) as Image[];
 };
 
 export const findImageById = (id: number): Image | undefined => {
-  return images.find((image) => image.id === id);
+  return db.prepare(`${IMAGE_SELECT_SQL} WHERE id = ?`).get(id) as Image | undefined;
 };
 
 export const createImage = (input: CreateImageInput): Image => {
-  const newImage: Image = {
-    id: nextImageId,
-    title: input.title,
-    author: input.author,
-    createdAt: new Date().toISOString(),
-    filename: input.filename,
-  };
+  const createdAt = new Date().toISOString();
+  const insertResult = db
+    .prepare(
+      `
+      INSERT INTO images (title, author, created_at, filename)
+      VALUES (?, ?, ?, ?)
+    `
+    )
+    .run(input.title, input.author, createdAt, input.filename);
 
-  nextImageId += 1;
-  images.push(newImage);
-  return newImage;
+  const imageId = Number(insertResult.lastInsertRowid);
+  const createdImage = findImageById(imageId);
+  if (!createdImage) {
+    throw new Error("Failed to create image.");
+  }
+
+  return createdImage;
 };
 
 export const updateImage = (id: number, input: UpdateImageInput): Image | undefined => {
-  const image = findImageById(id);
-  if (!image) {
+  const existingImage = findImageById(id);
+  if (!existingImage) {
     return undefined;
   }
 
+  const fields: string[] = [];
+  const values: string[] = [];
+
   if (input.title !== undefined) {
-    image.title = input.title;
+    fields.push("title = ?");
+    values.push(input.title);
   }
   if (input.author !== undefined) {
-    image.author = input.author;
+    fields.push("author = ?");
+    values.push(input.author);
   }
   if (input.filename !== undefined) {
-    image.filename = input.filename;
+    fields.push("filename = ?");
+    values.push(input.filename);
   }
 
-  return image;
+  if (fields.length > 0) {
+    db.prepare(`UPDATE images SET ${fields.join(", ")} WHERE id = ?`).run(...values, id);
+  }
+
+  return findImageById(id);
 };
 
 export const deleteImage = (id: number): boolean => {
-  const targetIndex = images.findIndex((image) => image.id === id);
-  if (targetIndex === -1) {
-    return false;
-  }
-
-  images.splice(targetIndex, 1);
-  return true;
+  const deleteResult = db.prepare("DELETE FROM images WHERE id = ?").run(id);
+  return deleteResult.changes > 0;
 };
