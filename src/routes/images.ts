@@ -12,13 +12,14 @@ import {
   validateListQuery,
   validateUpdateMediaInput,
 } from "../utils/validators.js";
+import { createHttpError } from "../utils/httpError.js";
 
 const router = Router();
 
 router.get("/", (req, res) => {
   const queryValidation = validateListQuery(req.query as unknown);
   if (!queryValidation.ok) {
-    return res.status(400).json({ error: queryValidation.message });
+    throw createHttpError(400, queryValidation.message);
   }
 
   return res.json({ items: listImages(queryValidation.value) });
@@ -27,12 +28,12 @@ router.get("/", (req, res) => {
 router.get("/:id", (req, res) => {
   const imageId = parsePositiveInt(req.params.id);
   if (imageId === null) {
-    return res.status(400).json({ error: "id must be a positive integer." });
+    throw createHttpError(400, "id must be a positive integer.");
   }
 
   const image = findImageById(imageId);
   if (!image) {
-    return res.status(404).json({ error: "Image not found." });
+    throw createHttpError(404, "Image not found.");
   }
 
   return res.json({ item: image });
@@ -41,7 +42,7 @@ router.get("/:id", (req, res) => {
 router.post("/", (req, res) => {
   const validationResult = validateCreateMediaInput(req.body as unknown);
   if (!validationResult.ok) {
-    return res.status(400).json({ error: validationResult.message });
+    throw createHttpError(400, validationResult.message);
   }
 
   const createdImage = createImage(validationResult.value);
@@ -51,17 +52,17 @@ router.post("/", (req, res) => {
 router.patch("/:id", (req, res) => {
   const imageId = parsePositiveInt(req.params.id);
   if (imageId === null) {
-    return res.status(400).json({ error: "id must be a positive integer." });
+    throw createHttpError(400, "id must be a positive integer.");
   }
 
   const validationResult = validateUpdateMediaInput(req.body as unknown);
   if (!validationResult.ok) {
-    return res.status(400).json({ error: validationResult.message });
+    throw createHttpError(400, validationResult.message);
   }
 
   const updatedImage = updateImage(imageId, validationResult.value);
   if (!updatedImage) {
-    return res.status(404).json({ error: "Image not found." });
+    throw createHttpError(404, "Image not found.");
   }
 
   return res.json({ item: updatedImage });
@@ -70,12 +71,12 @@ router.patch("/:id", (req, res) => {
 router.delete("/:id", (req, res) => {
   const imageId = parsePositiveInt(req.params.id);
   if (imageId === null) {
-    return res.status(400).json({ error: "id must be a positive integer." });
+    throw createHttpError(400, "id must be a positive integer.");
   }
 
   const deleted = deleteImage(imageId);
   if (!deleted) {
-    return res.status(404).json({ error: "Image not found." });
+    throw createHttpError(404, "Image not found.");
   }
 
   return res.status(204).send();
@@ -84,12 +85,12 @@ router.delete("/:id", (req, res) => {
 router.get("/:id/download", (req, res) => {
   const imageId = parsePositiveInt(req.params.id);
   if (imageId === null) {
-    return res.status(400).json({ error: "id must be a positive integer." });
+    throw createHttpError(400, "id must be a positive integer.");
   }
 
   const image = findImageById(imageId);
   if (!image) {
-    return res.status(404).json({ error: "Image not found." });
+    throw createHttpError(404, "Image not found.");
   }
 
   res.setHeader("Content-Type", "application/octet-stream");
