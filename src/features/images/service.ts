@@ -4,13 +4,15 @@ import type { Image } from "../../types/entities.js";
 export type CreateImageInput = {
   title: string;
   author: string;
-  filename: string;
+  storedPath: string;
+  originalName: string;
+  mimeType: string;
+  fileSize: number;
 };
 
 export type UpdateImageInput = {
   title?: string;
   author?: string;
-  filename?: string;
 };
 
 export type ListImagesOptions = {
@@ -24,7 +26,10 @@ const IMAGE_SELECT_SQL = `
     title,
     author,
     created_at AS createdAt,
-    filename
+    stored_path AS storedPath,
+    original_name AS originalName,
+    mime_type AS mimeType,
+    file_size AS fileSize
   FROM images
 `;
 
@@ -57,11 +62,29 @@ export const createImage = (input: CreateImageInput): Image => {
   const insertResult = db
     .prepare(
       `
-      INSERT INTO images (title, author, created_at, filename)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO images (
+        title,
+        author,
+        created_at,
+        filename,
+        stored_path,
+        original_name,
+        mime_type,
+        file_size
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `
     )
-    .run(input.title, input.author, createdAt, input.filename);
+    .run(
+      input.title,
+      input.author,
+      createdAt,
+      input.storedPath,
+      input.storedPath,
+      input.originalName,
+      input.mimeType,
+      input.fileSize
+    );
 
   const imageId = Number(insertResult.lastInsertRowid);
   const createdImage = findImageById(imageId);
@@ -88,10 +111,6 @@ export const updateImage = (id: number, input: UpdateImageInput): Image | undefi
   if (input.author !== undefined) {
     fields.push("author = ?");
     values.push(input.author);
-  }
-  if (input.filename !== undefined) {
-    fields.push("filename = ?");
-    values.push(input.filename);
   }
 
   if (fields.length > 0) {

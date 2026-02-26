@@ -4,13 +4,15 @@ import type { Model } from "../../types/entities.js";
 export type CreateModelInput = {
   title: string;
   author: string;
-  filename: string;
+  storedPath: string;
+  originalName: string;
+  mimeType: string;
+  fileSize: number;
 };
 
 export type UpdateModelInput = {
   title?: string;
   author?: string;
-  filename?: string;
 };
 
 export type ListModelsOptions = {
@@ -24,7 +26,10 @@ const MODEL_SELECT_SQL = `
     title,
     author,
     created_at AS createdAt,
-    filename
+    stored_path AS storedPath,
+    original_name AS originalName,
+    mime_type AS mimeType,
+    file_size AS fileSize
   FROM models
 `;
 
@@ -57,11 +62,29 @@ export const createModel = (input: CreateModelInput): Model => {
   const insertResult = db
     .prepare(
       `
-      INSERT INTO models (title, author, created_at, filename)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO models (
+        title,
+        author,
+        created_at,
+        filename,
+        stored_path,
+        original_name,
+        mime_type,
+        file_size
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `
     )
-    .run(input.title, input.author, createdAt, input.filename);
+    .run(
+      input.title,
+      input.author,
+      createdAt,
+      input.storedPath,
+      input.storedPath,
+      input.originalName,
+      input.mimeType,
+      input.fileSize
+    );
 
   const modelId = Number(insertResult.lastInsertRowid);
   const createdModel = findModelById(modelId);
@@ -88,10 +111,6 @@ export const updateModel = (id: number, input: UpdateModelInput): Model | undefi
   if (input.author !== undefined) {
     fields.push("author = ?");
     values.push(input.author);
-  }
-  if (input.filename !== undefined) {
-    fields.push("filename = ?");
-    values.push(input.filename);
   }
 
   if (fields.length > 0) {

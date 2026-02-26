@@ -3,7 +3,10 @@ type MediaEntity = {
   title: string;
   author: string;
   createdAt: string;
-  filename: string;
+  storedPath: string;
+  originalName: string;
+  mimeType: string;
+  fileSize: number;
 };
 
 export type Model = MediaEntity;

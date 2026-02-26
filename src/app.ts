@@ -3,8 +3,10 @@ import { errorHandler, notFoundHandler } from "./middlewares/error.js";
 import rootRouter from "./routes/root.js";
 import modelsRouter from "./routes/models.js";
 import imagesRouter from "./routes/images.js";
+import { ensureUploadDirectories } from "./utils/storage.js";
 
 const app = express();
+ensureUploadDirectories();
 app.use(express.json());
 
 app.use("/", rootRouter);

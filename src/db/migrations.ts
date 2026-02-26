@@ -21,6 +21,7 @@ const createMediaTablesMigration: Migration = {
         title TEXT NOT NULL,
         author TEXT NOT NULL,
         created_at TEXT NOT NULL,
+        filename TEXT NOT NULL DEFAULT '',
         stored_path TEXT NOT NULL DEFAULT '',
         original_name TEXT NOT NULL DEFAULT '',
         mime_type TEXT NOT NULL DEFAULT 'application/octet-stream',
@@ -32,6 +33,7 @@ const createMediaTablesMigration: Migration = {
         title TEXT NOT NULL,
         author TEXT NOT NULL,
         created_at TEXT NOT NULL,
+        filename TEXT NOT NULL DEFAULT '',
         stored_path TEXT NOT NULL DEFAULT '',
         original_name TEXT NOT NULL DEFAULT '',
         mime_type TEXT NOT NULL DEFAULT 'application/octet-stream',
@@ -74,7 +76,28 @@ const addFileColumnsMigration: Migration = {
   },
 };
 
-const migrations: Migration[] = [createMediaTablesMigration, addFileColumnsMigration];
+const ensureLegacyFilenameColumnMigration: Migration = {
+  id: "003_ensure_legacy_filename_column",
+  up: (db) => {
+    const tables = ["models", "images"] as const;
+
+    for (const tableName of tables) {
+      if (!hasColumn(db, tableName, "filename")) {
+        db.prepare(`ALTER TABLE ${tableName} ADD COLUMN filename TEXT NOT NULL DEFAULT ''`).run();
+      }
+
+      db.prepare(
+        `UPDATE ${tableName} SET filename = stored_path WHERE filename = ''`
+      ).run();
+    }
+  },
+};
+
+const migrations: Migration[] = [
+  createMediaTablesMigration,
+  addFileColumnsMigration,
+  ensureLegacyFilenameColumnMigration,
+];
 
 export const runMigrations = (db: Database.Database): void => {
   db.exec(`

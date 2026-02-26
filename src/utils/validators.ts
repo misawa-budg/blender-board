@@ -8,13 +8,11 @@ export type ListQueryOptions = {
 export type MediaCreateInput = {
   title: string;
   author: string;
-  filename: string;
 };
 
 export type MediaUpdateInput = {
   title?: string;
   author?: string;
-  filename?: string;
 };
 
 export const parsePositiveInt = (value: string): number | null => {
@@ -66,7 +64,6 @@ export const validateCreateMediaInput = (
   const candidate = value as Record<string, unknown>;
   const title = candidate.title;
   const author = candidate.author;
-  const filename = candidate.filename;
 
   if (typeof title !== "string" || title.trim() === "") {
     return { ok: false, message: "title is required and must be a non-empty string." };
@@ -76,16 +73,11 @@ export const validateCreateMediaInput = (
     return { ok: false, message: "author is required and must be a non-empty string." };
   }
 
-  if (typeof filename !== "string" || filename.trim() === "") {
-    return { ok: false, message: "filename is required and must be a non-empty string." };
-  }
-
   return {
     ok: true,
     value: {
       title: title.trim(),
       author: author.trim(),
-      filename: filename.trim(),
     },
   };
 };
@@ -114,15 +106,8 @@ export const validateUpdateMediaInput = (
     result.author = candidate.author.trim();
   }
 
-  if (candidate.filename !== undefined) {
-    if (typeof candidate.filename !== "string" || candidate.filename.trim() === "") {
-      return { ok: false, message: "filename must be a non-empty string when provided." };
-    }
-    result.filename = candidate.filename.trim();
-  }
-
   if (Object.keys(result).length === 0) {
-    return { ok: false, message: "At least one of title, author, filename is required." };
+    return { ok: false, message: "At least one of title or author is required." };
   }
 
   return { ok: true, value: result };

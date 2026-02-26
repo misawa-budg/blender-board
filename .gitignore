@@ -5,3 +5,4 @@ requests.http
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+uploads/
