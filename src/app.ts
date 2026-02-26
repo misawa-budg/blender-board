@@ -4,6 +4,7 @@ import { errorHandler, notFoundHandler } from "./middlewares/error.js";
 import rootRouter from "./routes/root.js";
 import modelsRouter from "./routes/models.js";
 import imagesRouter from "./routes/images.js";
+import openapiRouter from "./routes/openapi.js";
 import { ensureUploadDirectories } from "./utils/storage.js";
 
 const app = express();
@@ -29,6 +30,7 @@ app.get("/models/:id", (_req, res) => {
 });
 
 app.use("/", rootRouter);
+app.use("/api/openapi.json", openapiRouter);
 app.use("/api/models", modelsRouter);
 app.use("/api/images", imagesRouter);
 app.use(notFoundHandler);
