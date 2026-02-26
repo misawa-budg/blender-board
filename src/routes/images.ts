@@ -4,6 +4,7 @@ import {
   findImageById,
   listImages,
   type CreateImageInput,
+  type ListImagesOptions,
 } from "../features/images/service.js";
 
 const router = Router();
@@ -16,6 +17,37 @@ const parseId = (value: string): number | null => {
     return null;
   }
   return parsedValue;
+};
+
+const validateListImagesQuery = (value: unknown): ValidationResult<ListImagesOptions> => {
+  if (typeof value !== "object" || value === null) {
+    return { ok: false, message: "Query must be an object." };
+  }
+
+  const candidate = value as Record<string, unknown>;
+  const options: ListImagesOptions = {};
+
+  if (typeof candidate.q === "string") {
+    const trimmedValue = candidate.q.trim();
+    if (trimmedValue.length > 0) {
+      options.q = trimmedValue;
+    }
+  }
+
+  if (candidate.limit !== undefined) {
+    if (typeof candidate.limit !== "string") {
+      return { ok: false, message: "limit must be a positive integer." };
+    }
+
+    const parsedLimit = Number.parseInt(candidate.limit, 10);
+    if (Number.isNaN(parsedLimit) || parsedLimit <= 0 || parsedLimit > 100) {
+      return { ok: false, message: "limit must be between 1 and 100." };
+    }
+
+    options.limit = parsedLimit;
+  }
+
+  return { ok: true, value: options };
 };
 
 const validateCreateImageInput = (value: unknown): ValidationResult<CreateImageInput> => {
@@ -51,7 +83,12 @@ const validateCreateImageInput = (value: unknown): ValidationResult<CreateImageI
 };
 
 router.get("/", (_req, res) => {
-  res.json({ items: listImages() });
+  const queryValidation = validateListImagesQuery(_req.query as unknown);
+  if (!queryValidation.ok) {
+    return res.status(400).json({ error: queryValidation.message });
+  }
+
+  return res.json({ items: listImages(queryValidation.value) });
 });
 
 router.get("/:id", (req, res) => {

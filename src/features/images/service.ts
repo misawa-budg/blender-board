@@ -6,12 +6,33 @@ export type CreateImageInput = {
   filename: string;
 };
 
+export type ListImagesOptions = {
+  q?: string;
+  limit?: number;
+};
+
 const images: Image[] = [...mockImages];
 let nextImageId =
   images.reduce((currentMax, image) => Math.max(currentMax, image.id), 0) + 1;
 
-export const listImages = (): Image[] => {
-  return [...images];
+export const listImages = (options: ListImagesOptions = {}): Image[] => {
+  let result = [...images];
+
+  if (options.q) {
+    const loweredKeyword = options.q.toLowerCase();
+    result = result.filter((image) => {
+      return (
+        image.title.toLowerCase().includes(loweredKeyword) ||
+        image.author.toLowerCase().includes(loweredKeyword)
+      );
+    });
+  }
+
+  if (typeof options.limit === "number") {
+    result = result.slice(0, options.limit);
+  }
+
+  return result;
 };
 
 export const findImageById = (id: number): Image | undefined => {
