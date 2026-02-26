@@ -73,6 +73,11 @@
           <div id="pagination" class="pagination hidden" aria-label="ページネーション">
             <button id="prev-page-button" type="button">前へ</button>
             <p id="page-info" class="pagination-info">1 / 1 ページ</p>
+            <form id="page-jump-form" class="page-jump-form" novalidate>
+              <label for="page-jump-input" class="page-jump-label">ページ移動</label>
+              <input id="page-jump-input" type="number" min="1" step="1" inputmode="numeric" />
+              <button id="page-jump-button" type="submit">移動</button>
+            </form>
             <button id="next-page-button" type="button">次へ</button>
           </div>
         </section>

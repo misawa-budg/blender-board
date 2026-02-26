@@ -353,6 +353,44 @@ body {
   cursor: not-allowed;
 }
 
+.page-jump-form {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.page-jump-label {
+  font-size: 0.83rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.page-jump-form input {
+  width: 5.2rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.42rem 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--surface);
+}
+
+.page-jump-form button {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  padding: 0.42rem 0.72rem;
+  cursor: pointer;
+}
+
+.page-jump-form input:disabled,
+.page-jump-form button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .pagination-info {
   margin: 0;
   color: var(--muted);
@@ -794,6 +832,20 @@ body {
 
   .pagination button {
     flex: 1;
+  }
+
+  .page-jump-form {
+    width: 100%;
+    justify-content: center;
+    order: 2;
+  }
+
+  .page-jump-form input {
+    width: 4.5rem;
+  }
+
+  .page-jump-form button {
+    flex: 0 0 auto;
   }
 
   .pagination-info {
