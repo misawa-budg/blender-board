@@ -342,6 +342,23 @@ body {
   gap: 0.8rem;
 }
 
+.related-section {
+  border-top: 1px solid var(--line);
+  padding-top: 0.9rem;
+}
+
+.related-section h3 {
+  margin: 0 0 0.6rem;
+  font-size: 1rem;
+}
+
+.related-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
 .detail-edit {
   border-top: 1px solid var(--line);
   padding-top: 1rem;

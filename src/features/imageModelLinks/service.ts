@@ -8,6 +8,7 @@ export type LinkedModelSummary = {
   originalName: string;
   mimeType: string;
   fileSize: number;
+  hasPreview: number;
 };
 
 export type LinkedImageSummary = {
@@ -70,7 +71,8 @@ export const listModelsByImageId = (imageId: number): LinkedModelSummary[] => {
         m.created_at AS createdAt,
         m.original_name AS originalName,
         m.mime_type AS mimeType,
-        m.file_size AS fileSize
+        m.file_size AS fileSize,
+        CASE WHEN m.preview_stored_path <> '' THEN 1 ELSE 0 END AS hasPreview
       FROM image_model_links AS l
       INNER JOIN models AS m ON m.id = l.model_id
       WHERE l.image_id = ?

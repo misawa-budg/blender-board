@@ -55,6 +55,16 @@
               <dd id="item-file-size"></dd>
             </dl>
 
+            <section id="related-models-section" class="related-section hidden">
+              <h3>この画像で使われたモデル</h3>
+              <ul id="related-models-list" class="related-list"></ul>
+            </section>
+
+            <section id="related-images-section" class="related-section hidden">
+              <h3>このモデルが使われた画像</h3>
+              <ul id="related-images-list" class="related-list"></ul>
+            </section>
+
             <div class="detail-actions">
               <a id="download-link" class="download-link" href="#">ダウンロード</a>
               <a id="back-link" class="tab-link" href="/images">一覧へ戻る</a>
@@ -72,9 +82,17 @@
                     <span>投稿者</span>
                     <input id="edit-author" name="author" type="text" maxlength="120" required />
                   </label>
+                  <label id="edit-model-ids-field" class="field hidden">
+                    <span>関連モデルID（任意 / カンマ区切り）</span>
+                    <input id="edit-model-ids" name="modelIds" type="text" placeholder="例: 12,15,21" />
+                  </label>
                   <label class="field field-file">
                     <span>ファイル差し替え（任意）</span>
                     <input id="edit-file" name="file" type="file" />
+                  </label>
+                  <label id="edit-preview-file-field" class="field field-file hidden">
+                    <span>プレビュー用3D差し替え（任意 / glb,gltf）</span>
+                    <input id="edit-preview-file" name="previewFile" type="file" accept=".glb,.gltf" />
                   </label>
                 </div>
                 <div class="detail-edit-actions">
