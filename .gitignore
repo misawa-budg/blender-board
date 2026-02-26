@@ -2,3 +2,6 @@
 node_modules/
 dist/
 requests.http
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
