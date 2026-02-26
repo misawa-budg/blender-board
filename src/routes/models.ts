@@ -186,24 +186,30 @@ router.get("/:id", (req, res) => {
 });
 
 router.post("/", uploadModelFiles, (req, res) => {
+  const { sourceFile, previewFile } = getUploadedModelFiles(req);
+  const cleanupUploadedFiles = (): void => {
+    deleteFileIfExists(sourceFile?.path);
+    deleteFileIfExists(previewFile?.path);
+  };
+
   const validationResult = validateCreateMediaInput(req.body as unknown);
   if (!validationResult.ok) {
+    cleanupUploadedFiles();
     throw createHttpError(400, validationResult.message);
   }
 
-  const { sourceFile, previewFile } = getUploadedModelFiles(req);
-
   if (!sourceFile) {
-    deleteFileIfExists(previewFile?.path);
+    cleanupUploadedFiles();
     throw createHttpError(400, "fileは必須です。");
-  }
-  ensureValidUploadedModelFile(sourceFile.path, sourceFile.originalname);
-  if (previewFile) {
-    ensureValidUploadedModelFile(previewFile.path, previewFile.originalname);
   }
 
   let createdModel;
   try {
+    ensureValidUploadedModelFile(sourceFile.path, sourceFile.originalname);
+    if (previewFile) {
+      ensureValidUploadedModelFile(previewFile.path, previewFile.originalname);
+    }
+
     createdModel = createModel({
       title: validationResult.value.title,
       author: validationResult.value.author,
@@ -217,8 +223,7 @@ router.post("/", uploadModelFiles, (req, res) => {
       previewFileSize: previewFile?.size ?? 0,
     });
   } catch (error) {
-    deleteFileIfExists(sourceFile.path);
-    deleteFileIfExists(previewFile?.path);
+    cleanupUploadedFiles();
     throw error;
   }
 

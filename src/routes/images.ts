@@ -203,24 +203,30 @@ router.get("/:id", (req, res) => {
 });
 
 router.post("/", uploadImageFile, (req, res) => {
+  const cleanupUploadedFile = (): void => {
+    if (req.file && existsSync(req.file.path)) {
+      unlinkSync(req.file.path);
+    }
+  };
+
+  if (!req.file) {
+    throw createHttpError(400, "fileは必須です。");
+  }
+
   const bodyCandidate =
     typeof req.body === "object" && req.body !== null
       ? (req.body as Record<string, unknown>)
       : undefined;
   const modelIdsResult = parseModelIdsInput(bodyCandidate?.modelIds);
   if (!modelIdsResult.ok) {
-    if (req.file && existsSync(req.file.path)) {
-      unlinkSync(req.file.path);
-    }
+    cleanupUploadedFile();
     throw createHttpError(400, modelIdsResult.message);
   }
 
   if (modelIdsResult.provided) {
     const missingModelIds = findMissingModelIds(modelIdsResult.value);
     if (missingModelIds.length > 0) {
-      if (req.file && existsSync(req.file.path)) {
-        unlinkSync(req.file.path);
-      }
+      cleanupUploadedFile();
       throw createHttpError(
         400,
         `存在しないmodelIdがあります: ${missingModelIds.join(", ")}`,
@@ -231,16 +237,13 @@ router.post("/", uploadImageFile, (req, res) => {
 
   const validationResult = validateCreateMediaInput(req.body as unknown);
   if (!validationResult.ok) {
+    cleanupUploadedFile();
     throw createHttpError(400, validationResult.message);
   }
 
-  if (!req.file) {
-    throw createHttpError(400, "fileは必須です。");
-  }
-  ensureValidUploadedImageFile(req.file.path, req.file.originalname);
-
   let createdImage;
   try {
+    ensureValidUploadedImageFile(req.file.path, req.file.originalname);
     createdImage = createImage({
       title: validationResult.value.title,
       author: validationResult.value.author,
@@ -253,9 +256,7 @@ router.post("/", uploadImageFile, (req, res) => {
       replaceImageModelLinks(createdImage.id, modelIdsResult.value);
     }
   } catch (error) {
-    if (existsSync(req.file.path)) {
-      unlinkSync(req.file.path);
-    }
+    cleanupUploadedFile();
     throw error;
   }
 
