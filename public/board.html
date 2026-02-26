@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blender Board</title>
+    <link rel="stylesheet" href="/styles/board.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="hero">
+        <p class="eyebrow">Blender Board</p>
+        <h1>Images</h1>
+        <p class="description">Latest image posts from creators.</p>
+      </header>
+
+      <main>
+        <section id="images-section">
+          <div class="section-head">
+            <h2>Image Gallery</h2>
+            <span id="images-count" class="count">loading...</span>
+          </div>
+          <div id="images-grid" class="card-grid"></div>
+          <p id="images-empty" class="empty hidden">No images posted yet.</p>
+        </section>
+      </main>
+    </div>
+
+    <script src="/scripts/board.js" defer></script>
+  </body>
+</html>
