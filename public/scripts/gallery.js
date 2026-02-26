@@ -25,6 +25,10 @@ if (!config) {
 const gridElement = document.getElementById("items-grid");
 const countElement = document.getElementById("items-count");
 const emptyElement = document.getElementById("items-empty");
+const paginationElement = document.getElementById("pagination");
+const pageInfoElement = document.getElementById("page-info");
+const prevPageButtonElement = document.getElementById("prev-page-button");
+const nextPageButtonElement = document.getElementById("next-page-button");
 const uploadFormElement = document.getElementById("upload-form");
 const submitButtonElement = document.getElementById("submit-button");
 const formStatusElement = document.getElementById("form-status");
@@ -39,6 +43,13 @@ const modelPickerState = {
   models: [],
   loading: false,
   requestToken: 0,
+};
+
+const paginationState = {
+  page: 1,
+  limit: 12,
+  total: 0,
+  totalPages: 1,
 };
 
 const formatDate = (value) => {
@@ -128,16 +139,35 @@ const renderCard = (item) => {
   `;
 };
 
+const renderPagination = () => {
+  if (
+    !(paginationElement instanceof HTMLElement) ||
+    !(pageInfoElement instanceof HTMLElement) ||
+    !(prevPageButtonElement instanceof HTMLButtonElement) ||
+    !(nextPageButtonElement instanceof HTMLButtonElement)
+  ) {
+    return;
+  }
+
+  const hasMultiplePages = paginationState.totalPages > 1;
+  paginationElement.classList.toggle("hidden", !hasMultiplePages);
+  pageInfoElement.textContent = `${paginationState.page} / ${paginationState.totalPages} ページ`;
+  prevPageButtonElement.disabled = paginationState.page <= 1;
+  nextPageButtonElement.disabled = paginationState.page >= paginationState.totalPages;
+};
+
 const renderItems = (items) => {
-  countElement.textContent = `${items.length} 件`;
+  countElement.textContent = `${paginationState.total} 件`;
   if (items.length === 0) {
     gridElement.innerHTML = "";
     emptyElement.classList.remove("hidden");
+    renderPagination();
     return;
   }
 
   emptyElement.classList.add("hidden");
   gridElement.innerHTML = items.map((item) => renderCard(item)).join("");
+  renderPagination();
 };
 
 const renderError = (message) => {
@@ -145,6 +175,9 @@ const renderError = (message) => {
   emptyElement.classList.remove("hidden");
   emptyElement.textContent = message;
   gridElement.innerHTML = "";
+  if (paginationElement instanceof HTMLElement) {
+    paginationElement.classList.add("hidden");
+  }
 };
 
 const setFormStatus = (message, type) => {
@@ -325,15 +358,45 @@ const queueLoadAuthorModels = () => {
   }, 220);
 };
 
-const loadItems = async () => {
+const loadItems = async (targetPage = paginationState.page) => {
   try {
-    const response = await fetch(`${config.endpoint}?limit=36`);
+    const params = new URLSearchParams();
+    params.set("limit", String(paginationState.limit));
+    params.set("page", String(targetPage));
+    params.set("sort", "createdAt");
+    params.set("order", "desc");
+
+    const response = await fetch(`${config.endpoint}?${params.toString()}`);
     if (!response.ok) {
       throw new Error(`一覧の取得に失敗しました: ${response.status}`);
     }
 
     const payload = await response.json();
     const items = Array.isArray(payload.items) ? payload.items : [];
+    const meta = payload && typeof payload === "object" ? payload.meta : null;
+    const totalFromMeta =
+      meta && typeof meta === "object" && typeof meta.total === "number" ? meta.total : items.length;
+    const limitFromMeta =
+      meta && typeof meta === "object" && typeof meta.limit === "number"
+        ? meta.limit
+        : paginationState.limit;
+    const pageFromMeta =
+      meta && typeof meta === "object" && typeof meta.page === "number" ? meta.page : targetPage;
+
+    paginationState.total = Number.isFinite(totalFromMeta) && totalFromMeta >= 0 ? totalFromMeta : items.length;
+    paginationState.limit = Number.isFinite(limitFromMeta) && limitFromMeta > 0 ? limitFromMeta : paginationState.limit;
+    paginationState.page = Number.isFinite(pageFromMeta) && pageFromMeta > 0 ? pageFromMeta : targetPage;
+    paginationState.totalPages = Math.max(1, Math.ceil(paginationState.total / paginationState.limit));
+
+    if (
+      items.length === 0 &&
+      paginationState.total > 0 &&
+      paginationState.page > paginationState.totalPages
+    ) {
+      await loadItems(paginationState.totalPages);
+      return;
+    }
+
     renderItems(items);
   } catch (error) {
     const message = error instanceof Error ? error.message : "一覧の取得に失敗しました。";
@@ -379,6 +442,25 @@ if (gridElement instanceof HTMLElement) {
       return;
     }
     window.location.assign(detailUrl);
+  });
+}
+
+if (
+  prevPageButtonElement instanceof HTMLButtonElement &&
+  nextPageButtonElement instanceof HTMLButtonElement
+) {
+  prevPageButtonElement.addEventListener("click", () => {
+    if (paginationState.page <= 1) {
+      return;
+    }
+    void loadItems(paginationState.page - 1);
+  });
+
+  nextPageButtonElement.addEventListener("click", () => {
+    if (paginationState.page >= paginationState.totalPages) {
+      return;
+    }
+    void loadItems(paginationState.page + 1);
   });
 }
 
@@ -441,7 +523,7 @@ if (
       modelPickerState.models = [];
       renderModelPickerOptions();
       setFormStatus("投稿が完了しました。", "success");
-      await loadItems();
+      await loadItems(1);
     } catch (error) {
       const message = error instanceof Error ? error.message : "アップロードに失敗しました。";
       setFormStatus(message, "error");
