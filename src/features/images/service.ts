@@ -22,6 +22,7 @@ export type UpdateImageInput = {
 
 export type ListImagesOptions = {
   q?: string;
+  author?: string;
   limit?: number;
   page?: number;
   sort?: ListSortField;
@@ -61,14 +62,27 @@ const IMAGE_SELECT_SQL = `
 const buildListFilter = (
   options: ListImagesOptions
 ): { whereClause: string; whereParams: string[] } => {
-  if (!options.q) {
+  const conditions: string[] = [];
+  const whereParams: string[] = [];
+
+  if (options.author) {
+    conditions.push("LOWER(author) = LOWER(?)");
+    whereParams.push(options.author);
+  }
+
+  if (options.q) {
+    conditions.push("(LOWER(title) LIKE ? OR LOWER(author) LIKE ?)");
+    const loweredKeyword = `%${options.q.toLowerCase()}%`;
+    whereParams.push(loweredKeyword, loweredKeyword);
+  }
+
+  if (conditions.length === 0) {
     return { whereClause: "", whereParams: [] };
   }
 
-  const loweredKeyword = `%${options.q.toLowerCase()}%`;
   return {
-    whereClause: " WHERE (LOWER(title) LIKE ? OR LOWER(author) LIKE ?)",
-    whereParams: [loweredKeyword, loweredKeyword],
+    whereClause: ` WHERE ${conditions.join(" AND ")}`,
+    whereParams,
   };
 };
 

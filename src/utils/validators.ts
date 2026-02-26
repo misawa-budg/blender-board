@@ -5,6 +5,7 @@ export type ListSortOrder = "asc" | "desc";
 
 export type ListQueryOptions = {
   q?: string;
+  author?: string;
   limit?: number;
   page?: number;
   sort?: ListSortField;
@@ -51,6 +52,13 @@ export const validateListQuery = (value: unknown): ValidationResult<ListQueryOpt
     const trimmedValue = candidate.q.trim();
     if (trimmedValue.length > 0) {
       options.q = trimmedValue;
+    }
+  }
+
+  if (typeof candidate.author === "string") {
+    const trimmedAuthor = candidate.author.trim();
+    if (trimmedAuthor.length > 0) {
+      options.author = trimmedAuthor;
     }
   }
 

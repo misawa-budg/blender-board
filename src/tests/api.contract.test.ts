@@ -81,6 +81,31 @@ test("一覧APIはpage/sort/orderを受け取りmetaを返す", async () => {
   assert.equal(payload.meta?.order, "asc");
 });
 
+test("一覧APIはauthorで絞り込める", async () => {
+  const fileA = createTempFile("author-a.png", Buffer.concat([pngSignature, Buffer.from("A")]));
+  const fileB = createTempFile("author-b.png", Buffer.concat([pngSignature, Buffer.from("B")]));
+
+  const postA = await api
+    .post("/api/images")
+    .field("title", "author-filter-a")
+    .field("author", "alice")
+    .attach("file", fileA);
+  assert.equal(postA.status, 201);
+
+  const postB = await api
+    .post("/api/images")
+    .field("title", "author-filter-b")
+    .field("author", "bob")
+    .attach("file", fileB);
+  assert.equal(postB.status, 201);
+
+  const listResponse = await api.get("/api/images?author=alice&q=author-filter");
+  assert.equal(listResponse.status, 200);
+  assert.ok(Array.isArray(listResponse.body.items));
+  assert.equal(listResponse.body.items.length, 1);
+  assert.equal(listResponse.body.items[0].author, "alice");
+});
+
 test("page指定時にlimit未指定なら400", async () => {
   const response = await api.get("/api/images?page=2");
   assert.equal(response.status, 400);

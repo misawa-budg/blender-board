@@ -16,6 +16,7 @@ const openApiDocument = {
         summary: "画像一覧",
         parameters: [
           { name: "q", in: "query", schema: { type: "string" } },
+          { name: "author", in: "query", schema: { type: "string" } },
           { name: "limit", in: "query", schema: { type: "integer", minimum: 1, maximum: 100 } },
           { name: "page", in: "query", schema: { type: "integer", minimum: 1 } },
           {
@@ -174,6 +175,7 @@ const openApiDocument = {
         summary: "モデル一覧",
         parameters: [
           { name: "q", in: "query", schema: { type: "string" } },
+          { name: "author", in: "query", schema: { type: "string" } },
           { name: "limit", in: "query", schema: { type: "integer", minimum: 1, maximum: 100 } },
           { name: "page", in: "query", schema: { type: "integer", minimum: 1 } },
           {
