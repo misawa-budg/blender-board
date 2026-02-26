@@ -366,6 +366,10 @@ body {
   gap: 1rem;
 }
 
+.card-grid.is-loading {
+  pointer-events: none;
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -376,6 +380,55 @@ body {
   gap: 0.6rem;
   min-height: 180px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-skeleton {
+  transform: none;
+  box-shadow: none;
+}
+
+.card-skeleton:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.skeleton-box {
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #ece8e3;
+}
+
+.skeleton-box::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.skeleton-preview {
+  aspect-ratio: 16 / 10;
+}
+
+.skeleton-line {
+  height: 0.72rem;
+}
+
+.skeleton-line-title {
+  height: 1rem;
+  width: 78%;
+}
+
+.skeleton-line-short {
+  width: 52%;
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .card:hover {
