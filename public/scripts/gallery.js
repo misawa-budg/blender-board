@@ -145,11 +145,7 @@ const canRenderModelPreview = (item) => {
   if (typeof item !== "object" || item === null) {
     return false;
   }
-  if (typeof item.previewUrl !== "string") {
-    return false;
-  }
-  const extension = getFileExtension(item.originalName);
-  return extension === ".glb" || extension === ".gltf";
+  return typeof item.previewUrl === "string" && item.previewUrl !== "";
 };
 
 const renderCard = (item) => {
