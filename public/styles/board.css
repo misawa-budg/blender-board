@@ -693,13 +693,102 @@ body {
   display: none;
 }
 
+@media (max-width: 900px) {
+  .page {
+    width: min(1100px, 94vw);
+    padding: 1.8rem 0 2.6rem;
+  }
+
+  .form-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+
+  .detail-preview-model {
+    height: 340px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page {
+    width: 94vw;
+    padding: 1.4rem 0 2rem;
+  }
+
+  .section-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  .tab-button,
+  .tab-link {
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .composer,
+  .detail-panel,
+  .confirm-card {
+    padding: 1rem;
+  }
+
+  .card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 0.8rem;
+  }
+
+  .card {
+    padding: 1rem;
+    min-height: 160px;
+  }
+
+  .detail-preview-image {
+    max-height: 320px;
+  }
+
+  .detail-preview-model {
+    height: 280px;
+  }
+
+  .composer-actions,
+  .detail-actions,
+  .detail-edit-actions,
+  .confirm-actions {
+    flex-wrap: wrap;
+  }
+
+  .composer-actions button,
+  .detail-edit-actions button {
+    flex: 1 1 180px;
+  }
+}
+
 @media (max-width: 640px) {
+  .hero {
+    margin-bottom: 1.2rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
   .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card-grid {
     grid-template-columns: 1fr;
   }
 
   .pagination {
     justify-content: stretch;
+    flex-wrap: wrap;
   }
 
   .pagination button {
@@ -709,5 +798,47 @@ body {
   .pagination-info {
     min-width: auto;
     width: 100%;
+    order: 3;
+  }
+
+  .detail-actions .download-link,
+  .detail-actions .tab-link {
+    width: 100%;
+    text-align: center;
+  }
+
+  .detail-edit-actions button {
+    width: 100%;
+  }
+
+  .detail-preview-model {
+    height: 220px;
+  }
+
+  .confirm-actions button {
+    flex: 1;
+  }
+}
+
+@media (max-width: 420px) {
+  .tabs {
+    gap: 0.2rem;
+    padding: 0.2rem;
+  }
+
+  .tab-button,
+  .tab-link {
+    padding: 0.52rem 0.75rem;
+    font-size: 0.92rem;
+  }
+
+  .form-panel > summary,
+  .picker > summary {
+    padding: 0.55rem 0.65rem;
+  }
+
+  .composer,
+  .detail-panel {
+    padding: 0.85rem;
   }
 }
