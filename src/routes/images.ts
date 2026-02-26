@@ -1,10 +1,13 @@
 import { Router } from "express";
 import {
   createImage,
+  deleteImage,
   findImageById,
   listImages,
   type CreateImageInput,
   type ListImagesOptions,
+  type UpdateImageInput,
+  updateImage,
 } from "../features/images/service.js";
 
 const router = Router();
@@ -82,6 +85,42 @@ const validateCreateImageInput = (value: unknown): ValidationResult<CreateImageI
   };
 };
 
+const validateUpdateImageInput = (value: unknown): ValidationResult<UpdateImageInput> => {
+  if (typeof value !== "object" || value === null) {
+    return { ok: false, message: "Request body must be an object." };
+  }
+
+  const candidate = value as Record<string, unknown>;
+  const result: UpdateImageInput = {};
+
+  if (candidate.title !== undefined) {
+    if (typeof candidate.title !== "string" || candidate.title.trim() === "") {
+      return { ok: false, message: "title must be a non-empty string when provided." };
+    }
+    result.title = candidate.title.trim();
+  }
+
+  if (candidate.author !== undefined) {
+    if (typeof candidate.author !== "string" || candidate.author.trim() === "") {
+      return { ok: false, message: "author must be a non-empty string when provided." };
+    }
+    result.author = candidate.author.trim();
+  }
+
+  if (candidate.filename !== undefined) {
+    if (typeof candidate.filename !== "string" || candidate.filename.trim() === "") {
+      return { ok: false, message: "filename must be a non-empty string when provided." };
+    }
+    result.filename = candidate.filename.trim();
+  }
+
+  if (Object.keys(result).length === 0) {
+    return { ok: false, message: "At least one of title, author, filename is required." };
+  }
+
+  return { ok: true, value: result };
+};
+
 router.get("/", (_req, res) => {
   const queryValidation = validateListImagesQuery(_req.query as unknown);
   if (!queryValidation.ok) {
@@ -113,6 +152,39 @@ router.post("/", (req, res) => {
 
   const createdImage = createImage(validationResult.value);
   return res.status(201).json({ item: createdImage });
+});
+
+router.patch("/:id", (req, res) => {
+  const imageId = parseId(req.params.id);
+  if (imageId === null) {
+    return res.status(400).json({ error: "id must be a positive integer." });
+  }
+
+  const validationResult = validateUpdateImageInput(req.body as unknown);
+  if (!validationResult.ok) {
+    return res.status(400).json({ error: validationResult.message });
+  }
+
+  const updatedImage = updateImage(imageId, validationResult.value);
+  if (!updatedImage) {
+    return res.status(404).json({ error: "Image not found." });
+  }
+
+  return res.json({ item: updatedImage });
+});
+
+router.delete("/:id", (req, res) => {
+  const imageId = parseId(req.params.id);
+  if (imageId === null) {
+    return res.status(400).json({ error: "id must be a positive integer." });
+  }
+
+  const deleted = deleteImage(imageId);
+  if (!deleted) {
+    return res.status(404).json({ error: "Image not found." });
+  }
+
+  return res.status(204).send();
 });
 
 router.get("/:id/download", (req, res) => {

@@ -6,6 +6,12 @@ export type CreateImageInput = {
   filename: string;
 };
 
+export type UpdateImageInput = {
+  title?: string;
+  author?: string;
+  filename?: string;
+};
+
 export type ListImagesOptions = {
   q?: string;
   limit?: number;
@@ -51,4 +57,33 @@ export const createImage = (input: CreateImageInput): Image => {
   nextImageId += 1;
   images.push(newImage);
   return newImage;
+};
+
+export const updateImage = (id: number, input: UpdateImageInput): Image | undefined => {
+  const image = findImageById(id);
+  if (!image) {
+    return undefined;
+  }
+
+  if (input.title !== undefined) {
+    image.title = input.title;
+  }
+  if (input.author !== undefined) {
+    image.author = input.author;
+  }
+  if (input.filename !== undefined) {
+    image.filename = input.filename;
+  }
+
+  return image;
+};
+
+export const deleteImage = (id: number): boolean => {
+  const targetIndex = images.findIndex((image) => image.id === id);
+  if (targetIndex === -1) {
+    return false;
+  }
+
+  images.splice(targetIndex, 1);
+  return true;
 };
