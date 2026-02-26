@@ -13,7 +13,9 @@
 
 body {
   margin: 0;
-  font-family: "Avenir Next", "Hiragino Kaku Gothic ProN", "BIZ UDPGothic", "Meiryo", sans-serif;
+  font-family:
+    "Avenir Next", "Hiragino Kaku Gothic ProN", "BIZ UDPGothic", "Meiryo",
+    sans-serif;
   color: var(--text);
   background: var(--bg);
   line-height: 1.6;
@@ -418,7 +420,9 @@ body {
   flex-direction: column;
   gap: 0.6rem;
   min-height: 180px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .card-skeleton {
@@ -443,7 +447,12 @@ body {
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.65),
+    transparent
+  );
   animation: skeleton-shimmer 1.2s ease-in-out infinite;
 }
 

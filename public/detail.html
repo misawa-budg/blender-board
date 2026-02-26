@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Blender Board | 詳細</title>
     <link rel="stylesheet" href="/styles/board.css" />
-    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <script
+      type="module"
+      src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"
+    ></script>
   </head>
   <body>
     <div class="page">
@@ -22,13 +25,26 @@
         </nav>
 
         <section class="detail-panel">
-          <div id="detail-status" class="status hidden" aria-live="polite"></div>
-          <div id="action-status" class="status hidden" aria-live="polite"></div>
+          <div
+            id="detail-status"
+            class="status hidden"
+            aria-live="polite"
+          ></div>
+          <div
+            id="action-status"
+            class="status hidden"
+            aria-live="polite"
+          ></div>
 
           <article id="detail-card" class="detail-card hidden">
             <h2 id="item-title" class="detail-title"></h2>
             <div id="detail-preview" class="detail-preview hidden">
-              <img id="detail-preview-image" class="detail-preview-image" src="" alt="画像プレビュー" />
+              <img
+                id="detail-preview-image"
+                class="detail-preview-image"
+                src=""
+                alt="画像プレビュー"
+              />
               <model-viewer
                 id="detail-preview-model"
                 class="detail-preview-model hidden"
@@ -38,7 +54,10 @@
                 interaction-prompt="none"
                 loading="lazy"
               ></model-viewer>
-              <p id="detail-preview-note" class="detail-preview-note hidden"></p>
+              <p
+                id="detail-preview-note"
+                class="detail-preview-note hidden"
+              ></p>
             </div>
             <dl class="detail-grid">
               <dt>ID</dt>
@@ -66,7 +85,9 @@
             </section>
 
             <div class="detail-actions">
-              <a id="download-link" class="download-link" href="#">ダウンロード</a>
+              <a id="download-link" class="download-link" href="#"
+                >ダウンロード</a
+              >
               <a id="back-link" class="tab-link" href="/images">一覧へ戻る</a>
             </div>
 
@@ -74,15 +95,31 @@
               <details id="edit-form-panel" class="form-panel">
                 <summary>編集フォームを表示</summary>
                 <h3>編集</h3>
-                <form id="edit-form" class="upload-form" enctype="multipart/form-data">
+                <form
+                  id="edit-form"
+                  class="upload-form"
+                  enctype="multipart/form-data"
+                >
                   <div class="form-grid">
                     <label class="field">
                       <span>タイトル</span>
-                      <input id="edit-title" name="title" type="text" maxlength="120" required />
+                      <input
+                        id="edit-title"
+                        name="title"
+                        type="text"
+                        maxlength="120"
+                        required
+                      />
                     </label>
                     <label class="field">
                       <span>投稿者</span>
-                      <input id="edit-author" name="author" type="text" maxlength="120" required />
+                      <input
+                        id="edit-author"
+                        name="author"
+                        type="text"
+                        maxlength="120"
+                        required
+                      />
                     </label>
                     <label id="edit-model-ids-field" class="field hidden">
                       <span>使用モデル（任意）</span>
@@ -95,8 +132,14 @@
                             placeholder="モデル名で検索"
                             autocomplete="off"
                           />
-                          <p id="edit-model-picker-hint" class="picker-hint"></p>
-                          <ul id="edit-model-picker-options" class="picker-options"></ul>
+                          <p
+                            id="edit-model-picker-hint"
+                            class="picker-hint"
+                          ></p>
+                          <ul
+                            id="edit-model-picker-options"
+                            class="picker-options"
+                          ></ul>
                         </div>
                       </details>
                     </label>
@@ -104,7 +147,10 @@
                       <span>ファイル差し替え（任意）</span>
                       <input id="edit-file" name="file" type="file" />
                     </label>
-                    <label id="edit-preview-file-field" class="field field-file hidden">
+                    <label
+                      id="edit-preview-file-field"
+                      class="field field-file hidden"
+                    >
                       <span>プレビュー用3D差し替え（任意 / glb,gltf）</span>
                       <input
                         id="edit-preview-file"
@@ -116,7 +162,13 @@
                   </div>
                   <div class="detail-edit-actions">
                     <button id="save-button" type="submit">保存</button>
-                    <button id="delete-button" class="danger-button" type="button">削除</button>
+                    <button
+                      id="delete-button"
+                      class="danger-button"
+                      type="button"
+                    >
+                      削除
+                    </button>
                   </div>
                 </form>
               </details>
@@ -126,13 +178,24 @@
       </main>
     </div>
 
-    <div id="delete-confirm-overlay" class="confirm-overlay hidden" role="dialog" aria-modal="true">
+    <div
+      id="delete-confirm-overlay"
+      class="confirm-overlay hidden"
+      role="dialog"
+      aria-modal="true"
+    >
       <div class="confirm-card">
         <h2 class="confirm-title">投稿の削除</h2>
         <p id="delete-confirm-message" class="confirm-message"></p>
         <div class="confirm-actions">
           <button id="delete-cancel-button" type="button">キャンセル</button>
-          <button id="delete-confirm-button" class="danger-button" type="button">削除する</button>
+          <button
+            id="delete-confirm-button"
+            class="danger-button"
+            type="button"
+          >
+            削除する
+          </button>
         </div>
       </div>
     </div>
