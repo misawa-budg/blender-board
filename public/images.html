@@ -42,10 +42,24 @@
                   required
                 />
               </label>
-              <label class="field">
-                <span>関連モデルID（任意 / カンマ区切り）</span>
-                <input id="model-ids-input" name="modelIds" type="text" placeholder="例: 12,15,21" />
-              </label>
+              <div class="field">
+                <span>使用モデル（任意）</span>
+                <details id="model-picker" class="picker">
+                  <summary>モデルを選択</summary>
+                  <div class="picker-body">
+                    <input
+                      id="model-picker-search"
+                      type="text"
+                      placeholder="モデル名で検索"
+                      autocomplete="off"
+                    />
+                    <p id="model-picker-hint" class="picker-hint">
+                      投稿者を入力すると過去モデルを選択できます。
+                    </p>
+                    <ul id="model-picker-options" class="picker-options"></ul>
+                  </div>
+                </details>
+              </div>
             </div>
             <div class="composer-actions">
               <button id="submit-button" type="submit">投稿する</button>

@@ -131,6 +131,58 @@ body {
   margin-right: 0.55rem;
 }
 
+.picker {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.picker > summary {
+  cursor: pointer;
+  padding: 0.6rem 0.7rem;
+  list-style: auto;
+}
+
+.picker-body {
+  border-top: 1px solid var(--line);
+  padding: 0.65rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.picker-body input {
+  width: 100%;
+}
+
+.picker-hint {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.picker-options {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+  max-height: 180px;
+  overflow: auto;
+}
+
+.picker-option {
+  display: flex;
+  gap: 0.45rem;
+  align-items: flex-start;
+  padding: 0.25rem 0.1rem;
+}
+
+.picker-empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 .composer-actions {
   display: flex;
   align-items: center;

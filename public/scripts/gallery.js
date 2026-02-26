@@ -28,6 +28,18 @@ const emptyElement = document.getElementById("items-empty");
 const uploadFormElement = document.getElementById("upload-form");
 const submitButtonElement = document.getElementById("submit-button");
 const formStatusElement = document.getElementById("form-status");
+const authorInputElement = document.getElementById("author-input");
+const modelPickerElement = document.getElementById("model-picker");
+const modelPickerSearchElement = document.getElementById("model-picker-search");
+const modelPickerHintElement = document.getElementById("model-picker-hint");
+const modelPickerOptionsElement = document.getElementById("model-picker-options");
+
+const modelPickerState = {
+  selectedIds: new Set(),
+  models: [],
+  loading: false,
+  requestToken: 0,
+};
 
 const formatDate = (value) => {
   const date = new Date(value);
@@ -153,6 +165,166 @@ const setFormStatus = (message, type) => {
   formStatusElement.classList.add(type === "success" ? "status-success" : "status-error");
 };
 
+const normalizeAuthor = () => {
+  if (!(authorInputElement instanceof HTMLInputElement)) {
+    return "";
+  }
+  return authorInputElement.value.trim();
+};
+
+const setModelPickerHint = (message) => {
+  if (!(modelPickerHintElement instanceof HTMLElement)) {
+    return;
+  }
+  modelPickerHintElement.textContent = message;
+};
+
+const getModelPickerSummaryElement = () => {
+  if (!(modelPickerElement instanceof HTMLDetailsElement)) {
+    return null;
+  }
+  const summary = modelPickerElement.querySelector("summary");
+  return summary instanceof HTMLElement ? summary : null;
+};
+
+const renderModelPickerSummary = () => {
+  if (config !== galleryConfig.images) {
+    return;
+  }
+  const summaryElement = getModelPickerSummaryElement();
+  if (!summaryElement) {
+    return;
+  }
+
+  const selectedCount = modelPickerState.selectedIds.size;
+  summaryElement.textContent =
+    selectedCount > 0 ? `モデルを選択（${selectedCount}件選択中）` : "モデルを選択";
+};
+
+const renderModelPickerOptions = () => {
+  if (!(modelPickerOptionsElement instanceof HTMLElement)) {
+    return;
+  }
+
+  const author = normalizeAuthor();
+  if (author === "") {
+    modelPickerOptionsElement.innerHTML = "";
+    setModelPickerHint("投稿者を入力すると過去モデルを選択できます。");
+    renderModelPickerSummary();
+    return;
+  }
+
+  if (modelPickerState.loading) {
+    modelPickerOptionsElement.innerHTML = "";
+    setModelPickerHint("候補を読み込み中です...");
+    renderModelPickerSummary();
+    return;
+  }
+
+  if (modelPickerState.models.length === 0) {
+    modelPickerOptionsElement.innerHTML = '<li class="picker-empty">候補がありません。</li>';
+    setModelPickerHint("検索条件に一致するモデルがありません。");
+    renderModelPickerSummary();
+    return;
+  }
+
+  setModelPickerHint("チェックを入れると使用モデルとして関連付けます。");
+  modelPickerOptionsElement.innerHTML = modelPickerState.models
+    .map((model) => {
+      const checked = modelPickerState.selectedIds.has(model.id) ? "checked" : "";
+      const safeTitle = escapeHtml(model.title);
+      const safeName = escapeHtml(model.originalName);
+      return `
+        <li>
+          <label class="picker-option">
+            <input type="checkbox" data-model-id="${model.id}" ${checked} />
+            <span>${safeTitle} (#${model.id})<br /><small>${safeName}</small></span>
+          </label>
+        </li>
+      `;
+    })
+    .join("");
+  renderModelPickerSummary();
+};
+
+const loadAuthorModels = async () => {
+  if (config !== galleryConfig.images) {
+    return;
+  }
+  if (!(modelPickerSearchElement instanceof HTMLInputElement)) {
+    return;
+  }
+
+  const author = normalizeAuthor();
+  modelPickerState.requestToken += 1;
+  const currentToken = modelPickerState.requestToken;
+
+  if (author === "") {
+    modelPickerState.models = [];
+    modelPickerState.loading = false;
+    renderModelPickerOptions();
+    return;
+  }
+
+  modelPickerState.loading = true;
+  renderModelPickerOptions();
+  const searchKeyword = modelPickerSearchElement.value.trim();
+
+  try {
+    const params = new URLSearchParams();
+    params.set("author", author);
+    params.set("limit", "30");
+    params.set("sort", "createdAt");
+    params.set("order", "desc");
+    if (searchKeyword !== "") {
+      params.set("q", searchKeyword);
+    }
+
+    const response = await fetch(`/api/models?${params.toString()}`);
+    if (!response.ok) {
+      throw new Error(`候補取得に失敗しました: ${response.status}`);
+    }
+
+    const payload = await response.json();
+    if (currentToken !== modelPickerState.requestToken) {
+      return;
+    }
+    const items = payload && typeof payload === "object" && Array.isArray(payload.items)
+      ? payload.items
+      : [];
+    modelPickerState.models = items
+      .filter((item) => item && typeof item === "object")
+      .map((item) => ({
+        id: Number(item.id),
+        title: typeof item.title === "string" ? item.title : "モデル",
+        originalName: typeof item.originalName === "string" ? item.originalName : "",
+      }))
+      .filter((item) => Number.isInteger(item.id) && item.id > 0);
+    modelPickerState.loading = false;
+    renderModelPickerOptions();
+  } catch (error) {
+    if (currentToken !== modelPickerState.requestToken) {
+      return;
+    }
+    modelPickerState.loading = false;
+    modelPickerState.models = [];
+    renderModelPickerOptions();
+    const message =
+      error instanceof Error ? error.message : "候補モデルの取得に失敗しました。";
+    setModelPickerHint(message);
+  }
+};
+
+let modelPickerDebounceTimer;
+const queueLoadAuthorModels = () => {
+  if (modelPickerDebounceTimer !== undefined) {
+    window.clearTimeout(modelPickerDebounceTimer);
+  }
+  modelPickerDebounceTimer = window.setTimeout(() => {
+    void loadAuthorModels();
+  }, 220);
+};
+
 const loadItems = async () => {
   try {
     const response = await fetch(`${config.endpoint}?limit=36`);
@@ -235,6 +407,13 @@ if (
       return;
     }
 
+    if (config === galleryConfig.images && modelPickerState.selectedIds.size > 0) {
+      formData.append(
+        "modelIds",
+        [...modelPickerState.selectedIds].sort((a, b) => a - b).join(",")
+      );
+    }
+
     submitButtonElement.disabled = true;
     setFormStatus("アップロード中...", "success");
 
@@ -258,6 +437,9 @@ if (
       }
 
       uploadFormElement.reset();
+      modelPickerState.selectedIds.clear();
+      modelPickerState.models = [];
+      renderModelPickerOptions();
       setFormStatus("投稿が完了しました。", "success");
       await loadItems();
     } catch (error) {
@@ -267,6 +449,54 @@ if (
       submitButtonElement.disabled = false;
     }
   });
+}
+
+if (
+  config === galleryConfig.images &&
+  authorInputElement instanceof HTMLInputElement &&
+  modelPickerSearchElement instanceof HTMLInputElement &&
+  modelPickerOptionsElement instanceof HTMLElement
+) {
+  renderModelPickerOptions();
+
+  authorInputElement.addEventListener("input", () => {
+    modelPickerState.selectedIds.clear();
+    queueLoadAuthorModels();
+  });
+  authorInputElement.addEventListener("blur", () => {
+    queueLoadAuthorModels();
+  });
+  modelPickerSearchElement.addEventListener("input", () => {
+    queueLoadAuthorModels();
+  });
+  modelPickerOptionsElement.addEventListener("change", (event) => {
+    if (!(event.target instanceof HTMLInputElement)) {
+      return;
+    }
+    if (event.target.type !== "checkbox") {
+      return;
+    }
+
+    const modelIdRaw = event.target.dataset.modelId;
+    const modelId = Number(modelIdRaw);
+    if (!Number.isInteger(modelId) || modelId <= 0) {
+      return;
+    }
+
+    if (event.target.checked) {
+      modelPickerState.selectedIds.add(modelId);
+    } else {
+      modelPickerState.selectedIds.delete(modelId);
+    }
+    renderModelPickerSummary();
+  });
+  if (modelPickerElement instanceof HTMLDetailsElement) {
+    modelPickerElement.addEventListener("toggle", () => {
+      if (modelPickerElement.open) {
+        queueLoadAuthorModels();
+      }
+    });
+  }
 }
 
 void loadItems();
