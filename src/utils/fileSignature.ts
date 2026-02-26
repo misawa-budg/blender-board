@@ -55,8 +55,7 @@ const validateImageFile = (extension: string, fileHead: Buffer): boolean => {
 
 const validateModelFile = (extension: string, fileHead: Buffer): boolean => {
   if (extension === ".blend") {
-    const header = asciiPrefix(fileHead, 16).toUpperCase();
-    return header.startsWith("BLENDER") || header.includes("BLENDER");
+    return true;
   }
   if (extension === ".glb") {
     return asciiPrefix(fileHead, 4) === "glTF";
