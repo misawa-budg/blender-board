@@ -69,6 +69,14 @@ const canRenderModelPreview = (item) => {
   return extension === ".glb" || extension === ".gltf";
 };
 
+const withCacheBust = (url) => {
+  if (typeof url !== "string" || url === "") {
+    return url;
+  }
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}r=${Date.now()}`;
+};
+
 const formatDate = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
@@ -195,7 +203,7 @@ const requestDeleteConfirmation = () => {
 const loadItem = async () => {
   showStatus("読み込み中...", "success");
   try {
-    const response = await fetch(`${config.endpoint}/${itemId}`);
+    const response = await fetch(`${config.endpoint}/${itemId}`, { cache: "no-store" });
     if (!response.ok) {
       let errorMessage = `詳細の取得に失敗しました: ${response.status}`;
       try {
@@ -256,14 +264,14 @@ const loadItem = async () => {
       detailPreviewNoteElement.textContent = "";
 
       if (kind === "images" && typeof item.previewUrl === "string") {
-        detailPreviewImageElement.src = item.previewUrl;
+        detailPreviewImageElement.src = withCacheBust(item.previewUrl);
         detailPreviewImageElement.alt =
           typeof item.title === "string" ? `${item.title} のプレビュー` : "画像プレビュー";
         detailPreviewImageElement.classList.remove("hidden");
         detailPreviewElement.classList.remove("hidden");
       } else if (kind === "models") {
         if (canRenderModelPreview(item)) {
-          detailPreviewModelElement.setAttribute("src", item.previewUrl);
+          detailPreviewModelElement.setAttribute("src", withCacheBust(item.previewUrl));
           detailPreviewModelElement.classList.remove("hidden");
         } else {
           detailPreviewNoteElement.textContent =
