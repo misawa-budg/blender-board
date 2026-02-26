@@ -29,6 +29,9 @@ const paginationElement = document.getElementById("pagination");
 const pageInfoElement = document.getElementById("page-info");
 const prevPageButtonElement = document.getElementById("prev-page-button");
 const nextPageButtonElement = document.getElementById("next-page-button");
+const pageJumpFormElement = document.getElementById("page-jump-form");
+const pageJumpInputElement = document.getElementById("page-jump-input");
+const pageJumpButtonElement = document.getElementById("page-jump-button");
 const uploadFormElement = document.getElementById("upload-form");
 const submitButtonElement = document.getElementById("submit-button");
 const formStatusElement = document.getElementById("form-status");
@@ -68,15 +71,16 @@ const createSkeletonCardHtml = () => {
 const parsePageQuery = () => {
   const params = new URLSearchParams(window.location.search);
   const rawPage = params.get("page");
-  if (rawPage === null) {
-    return 1;
+  return rawPage === null ? 1 : parsePositivePage(rawPage) ?? 1;
+};
+
+const parsePositivePage = (value) => {
+  if (!/^[1-9]\d*$/.test(value)) {
+    return null;
   }
-  if (!/^[1-9]\d*$/.test(rawPage)) {
-    return 1;
-  }
-  const parsedPage = Number(rawPage);
+  const parsedPage = Number(value);
   if (!Number.isSafeInteger(parsedPage) || parsedPage < 1) {
-    return 1;
+    return null;
   }
   return parsedPage;
 };
@@ -201,7 +205,9 @@ const renderPagination = () => {
     !(paginationElement instanceof HTMLElement) ||
     !(pageInfoElement instanceof HTMLElement) ||
     !(prevPageButtonElement instanceof HTMLButtonElement) ||
-    !(nextPageButtonElement instanceof HTMLButtonElement)
+    !(nextPageButtonElement instanceof HTMLButtonElement) ||
+    !(pageJumpInputElement instanceof HTMLInputElement) ||
+    !(pageJumpButtonElement instanceof HTMLButtonElement)
   ) {
     return;
   }
@@ -211,6 +217,11 @@ const renderPagination = () => {
   pageInfoElement.textContent = `${paginationState.page} / ${paginationState.totalPages} ページ`;
   prevPageButtonElement.disabled = paginationState.page <= 1;
   nextPageButtonElement.disabled = paginationState.page >= paginationState.totalPages;
+  pageJumpInputElement.disabled = !hasMultiplePages;
+  pageJumpButtonElement.disabled = !hasMultiplePages;
+  pageJumpInputElement.min = "1";
+  pageJumpInputElement.max = String(paginationState.totalPages);
+  pageJumpInputElement.value = String(paginationState.page);
 };
 
 const renderLoadingState = (targetPage) => {
@@ -229,6 +240,12 @@ const renderLoadingState = (targetPage) => {
     pageInfoElement.textContent = `${targetPage} ページを読み込み中...`;
     prevPageButtonElement.disabled = true;
     nextPageButtonElement.disabled = true;
+    if (pageJumpInputElement instanceof HTMLInputElement) {
+      pageJumpInputElement.disabled = true;
+    }
+    if (pageJumpButtonElement instanceof HTMLButtonElement) {
+      pageJumpButtonElement.disabled = true;
+    }
   }
 };
 
@@ -259,6 +276,9 @@ const renderError = (message) => {
   gridElement.innerHTML = "";
   if (paginationElement instanceof HTMLElement) {
     paginationElement.classList.add("hidden");
+  }
+  if (pageJumpInputElement instanceof HTMLInputElement) {
+    pageJumpInputElement.setCustomValidity("");
   }
 };
 
@@ -498,6 +518,35 @@ const loadItems = async (targetPage = paginationState.page, options = {}) => {
   }
 };
 
+const submitJumpPage = () => {
+  if (!(pageJumpInputElement instanceof HTMLInputElement)) {
+    return;
+  }
+
+  const rawValue = pageJumpInputElement.value.trim();
+  const parsedPage = parsePositivePage(rawValue);
+
+  pageJumpInputElement.setCustomValidity("");
+  if (parsedPage === null) {
+    pageJumpInputElement.setCustomValidity("1以上の整数を入力してください。");
+    pageJumpInputElement.reportValidity();
+    return;
+  }
+
+  if (parsedPage > paginationState.totalPages) {
+    pageJumpInputElement.setCustomValidity(`1〜${paginationState.totalPages}の範囲で入力してください。`);
+    pageJumpInputElement.reportValidity();
+    return;
+  }
+
+  if (parsedPage === paginationState.page) {
+    scrollToGalleryHead();
+    return;
+  }
+
+  void loadItems(parsedPage, { scrollAfterLoad: true });
+};
+
 if (gridElement instanceof HTMLElement) {
   gridElement.addEventListener("click", (event) => {
     if (!(event.target instanceof Element)) {
@@ -555,6 +604,20 @@ if (
       return;
     }
     void loadItems(paginationState.page + 1, { scrollAfterLoad: true });
+  });
+}
+
+if (
+  pageJumpFormElement instanceof HTMLFormElement &&
+  pageJumpInputElement instanceof HTMLInputElement
+) {
+  pageJumpFormElement.addEventListener("submit", (event) => {
+    event.preventDefault();
+    submitJumpPage();
+  });
+
+  pageJumpInputElement.addEventListener("input", () => {
+    pageJumpInputElement.setCustomValidity("");
   });
 }
 
