@@ -20,10 +20,16 @@ type ValidateUpdateMediaInputOptions = {
 };
 
 export const parsePositiveInt = (value: string): number | null => {
-  const parsedValue = Number.parseInt(value, 10);
-  if (Number.isNaN(parsedValue) || parsedValue <= 0) {
+  const trimmedValue = value.trim();
+  if (!/^[1-9]\d*$/.test(trimmedValue)) {
     return null;
   }
+
+  const parsedValue = Number(trimmedValue);
+  if (!Number.isSafeInteger(parsedValue)) {
+    return null;
+  }
+
   return parsedValue;
 };
 
@@ -47,8 +53,8 @@ export const validateListQuery = (value: unknown): ValidationResult<ListQueryOpt
       return { ok: false, message: "limit must be a positive integer." };
     }
 
-    const parsedLimit = Number.parseInt(candidate.limit, 10);
-    if (Number.isNaN(parsedLimit) || parsedLimit <= 0 || parsedLimit > 100) {
+    const parsedLimit = parsePositiveInt(candidate.limit);
+    if (parsedLimit === null || parsedLimit > 100) {
       return { ok: false, message: "limit must be between 1 and 100." };
     }
 
