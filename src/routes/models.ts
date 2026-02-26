@@ -1,4 +1,5 @@
 import { existsSync, unlinkSync } from "node:fs";
+import { extname } from "node:path";
 import { Router } from "express";
 import {
   createModel,
@@ -30,10 +31,32 @@ type ModelListItemResponse = {
   originalName: string;
   mimeType: string;
   fileSize: number;
+  previewUrl: string | null;
   downloadUrl: string;
 };
 
+const webPreviewModelExtensions = new Set([".glb", ".gltf"]);
+
+const isModelWebPreviewSupported = (originalName: string): boolean => {
+  return webPreviewModelExtensions.has(extname(originalName).toLowerCase());
+};
+
+const resolveModelPreviewMimeType = (originalName: string, fallback: string): string => {
+  const extension = extname(originalName).toLowerCase();
+  if (extension === ".glb") {
+    return "model/gltf-binary";
+  }
+  if (extension === ".gltf") {
+    return "model/gltf+json";
+  }
+  return fallback;
+};
+
 const toModelListItemResponse = (model: Model): ModelListItemResponse => {
+  const previewUrl = isModelWebPreviewSupported(model.originalName)
+    ? `/api/models/${model.id}/preview`
+    : null;
+
   return {
     id: model.id,
     title: model.title,
@@ -42,6 +65,7 @@ const toModelListItemResponse = (model: Model): ModelListItemResponse => {
     originalName: model.originalName,
     mimeType: model.mimeType,
     fileSize: model.fileSize,
+    previewUrl,
     downloadUrl: `/api/models/${model.id}/download`,
   };
 };
@@ -232,6 +256,34 @@ router.get("/:id/download", (req, res) => {
   }
 
   return res.download(absoluteFilePath, model.originalName);
+});
+
+router.get("/:id/preview", (req, res) => {
+  const modelId = parsePositiveInt(req.params.id);
+  if (modelId === null) {
+    throw createHttpError(400, "idは正の整数で指定してください。");
+  }
+
+  const model = findModelById(modelId);
+  if (!model) {
+    throw createHttpError(404, "モデルが見つかりません。");
+  }
+  if (!isModelWebPreviewSupported(model.originalName)) {
+    throw createHttpError(
+      400,
+      "このモデル形式はWebプレビュー未対応です。glb/gltfを使用してください。",
+      "preview_not_supported"
+    );
+  }
+
+  const absoluteFilePath = resolveStoredFilePath("models", model.storedPath);
+  if (!existsSync(absoluteFilePath)) {
+    throw createHttpError(404, "保存済みモデルファイルが見つかりません。");
+  }
+
+  res.type(resolveModelPreviewMimeType(model.originalName, model.mimeType));
+  res.setHeader("Content-Disposition", "inline");
+  return res.sendFile(absoluteFilePath);
 });
 
 export default router;

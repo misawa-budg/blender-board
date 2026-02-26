@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Blender Board | 詳細</title>
     <link rel="stylesheet" href="/styles/board.css" />
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   </head>
   <body>
     <div class="page">
@@ -28,6 +29,16 @@
             <h2 id="item-title" class="detail-title"></h2>
             <div id="detail-preview" class="detail-preview hidden">
               <img id="detail-preview-image" class="detail-preview-image" src="" alt="画像プレビュー" />
+              <model-viewer
+                id="detail-preview-model"
+                class="detail-preview-model hidden"
+                src=""
+                camera-controls
+                auto-rotate
+                interaction-prompt="none"
+                loading="lazy"
+              ></model-viewer>
+              <p id="detail-preview-note" class="detail-preview-note hidden"></p>
             </div>
             <dl class="detail-grid">
               <dt>ID</dt>

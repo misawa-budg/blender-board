@@ -20,6 +20,8 @@ const actionStatusElement = document.getElementById("action-status");
 const detailCardElement = document.getElementById("detail-card");
 const detailPreviewElement = document.getElementById("detail-preview");
 const detailPreviewImageElement = document.getElementById("detail-preview-image");
+const detailPreviewModelElement = document.getElementById("detail-preview-model");
+const detailPreviewNoteElement = document.getElementById("detail-preview-note");
 const detailHeadingElement = document.getElementById("detail-heading");
 const detailDescriptionElement = document.getElementById("detail-description");
 const backLinkElement = document.getElementById("back-link");
@@ -47,6 +49,25 @@ const deleteConfirmButtonElement = document.getElementById("delete-confirm-butto
 
 let originalItemState = null;
 let deleteConfirmResolver = null;
+
+const getFileExtension = (value) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  const index = value.lastIndexOf(".");
+  if (index < 0) {
+    return "";
+  }
+  return value.slice(index).toLowerCase();
+};
+
+const canRenderModelPreview = (item) => {
+  if (typeof item.previewUrl !== "string") {
+    return false;
+  }
+  const extension = getFileExtension(item.originalName);
+  return extension === ".glb" || extension === ".gltf";
+};
 
 const formatDate = (value) => {
   const date = new Date(value);
@@ -223,15 +244,34 @@ const loadItem = async () => {
     }
     if (
       detailPreviewElement instanceof HTMLElement &&
-      detailPreviewImageElement instanceof HTMLImageElement
+      detailPreviewImageElement instanceof HTMLImageElement &&
+      detailPreviewModelElement instanceof HTMLElement &&
+      detailPreviewNoteElement instanceof HTMLElement
     ) {
+      detailPreviewImageElement.classList.add("hidden");
+      detailPreviewModelElement.classList.add("hidden");
+      detailPreviewNoteElement.classList.add("hidden");
+      detailPreviewImageElement.src = "";
+      detailPreviewModelElement.setAttribute("src", "");
+      detailPreviewNoteElement.textContent = "";
+
       if (kind === "images" && typeof item.previewUrl === "string") {
         detailPreviewImageElement.src = item.previewUrl;
         detailPreviewImageElement.alt =
           typeof item.title === "string" ? `${item.title} のプレビュー` : "画像プレビュー";
+        detailPreviewImageElement.classList.remove("hidden");
+        detailPreviewElement.classList.remove("hidden");
+      } else if (kind === "models") {
+        if (canRenderModelPreview(item)) {
+          detailPreviewModelElement.setAttribute("src", item.previewUrl);
+          detailPreviewModelElement.classList.remove("hidden");
+        } else {
+          detailPreviewNoteElement.textContent =
+            "この形式はWebプレビュー未対応です。glb/gltfで投稿すると3D表示できます。";
+          detailPreviewNoteElement.classList.remove("hidden");
+        }
         detailPreviewElement.classList.remove("hidden");
       } else {
-        detailPreviewImageElement.src = "";
         detailPreviewElement.classList.add("hidden");
       }
     }

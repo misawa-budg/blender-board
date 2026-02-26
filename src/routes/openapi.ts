@@ -267,6 +267,23 @@ const openApiDocument = {
         },
       },
     },
+    "/api/models/{id}/preview": {
+      get: {
+        summary: "モデルプレビュー（glb/gltfのみ）",
+        parameters: [{ $ref: "#/components/parameters/IdParam" }],
+        responses: {
+          "200": { description: "OK" },
+          "400": {
+            description: "Unsupported preview format",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
   },
   components: {
     parameters: {
@@ -288,7 +305,7 @@ const openApiDocument = {
           originalName: { type: "string" },
           mimeType: { type: "string" },
           fileSize: { type: "integer" },
-          previewUrl: { type: "string" },
+          previewUrl: { type: ["string", "null"] },
           downloadUrl: { type: "string" },
         },
       },

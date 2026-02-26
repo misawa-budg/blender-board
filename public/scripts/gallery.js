@@ -6,12 +6,14 @@ const galleryConfig = {
     label: "画像",
     detailPrefix: "/images",
     showImagePreview: true,
+    showModelPreview: false,
   },
   models: {
     endpoint: "/api/models",
     label: "モデル",
     detailPrefix: "/models",
     showImagePreview: false,
+    showModelPreview: true,
   },
 };
 
@@ -44,9 +46,31 @@ const escapeHtml = (value) => {
     .replaceAll("'", "&#39;");
 };
 
+const getFileExtension = (value) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  const index = value.lastIndexOf(".");
+  if (index < 0) {
+    return "";
+  }
+  return value.slice(index).toLowerCase();
+};
+
+const canRenderModelPreview = (item) => {
+  if (typeof item !== "object" || item === null) {
+    return false;
+  }
+  if (typeof item.previewUrl !== "string") {
+    return false;
+  }
+  const extension = getFileExtension(item.originalName);
+  return extension === ".glb" || extension === ".gltf";
+};
+
 const renderCard = (item) => {
   const detailUrl = `${config.detailPrefix}/${item.id}`;
-  const previewHtml =
+  let previewHtml =
     config.showImagePreview && typeof item.previewUrl === "string"
       ? `
       <div class="card-preview">
@@ -54,6 +78,29 @@ const renderCard = (item) => {
       </div>
     `
       : "";
+
+  if (config.showModelPreview) {
+    if (canRenderModelPreview(item)) {
+      previewHtml = `
+        <div class="card-preview">
+          <model-viewer
+            class="card-preview-model"
+            src="${item.previewUrl}"
+            camera-controls
+            interaction-prompt="none"
+            loading="lazy"
+            reveal="auto"
+          ></model-viewer>
+        </div>
+      `;
+    } else {
+      previewHtml = `
+        <div class="card-preview card-preview-unsupported">
+          <p class="card-preview-note">この形式はWebプレビュー未対応です（glb/gltf推奨）</p>
+        </div>
+      `;
+    }
+  }
   return `
     <article class="card card-clickable" data-detail-url="${detailUrl}" tabindex="0" role="link" aria-label="詳細を開く: ${escapeHtml(item.title)}">
       ${previewHtml}
