@@ -17,6 +17,7 @@ import {
 } from "../utils/validators.js";
 import { createHttpError } from "../utils/httpError.js";
 import { deleteStoredFile, resolveStoredFilePath } from "../utils/storage.js";
+import { hasValidFileSignature } from "../utils/fileSignature.js";
 import type { Image } from "../types/entities.js";
 
 const router = Router();
@@ -43,6 +44,21 @@ const toImageListItemResponse = (image: Image): ImageListItemResponse => {
     fileSize: image.fileSize,
     downloadUrl: `/api/images/${image.id}/download`,
   };
+};
+
+const ensureValidUploadedImageFile = (filePath: string, originalName: string): void => {
+  if (hasValidFileSignature("images", filePath, originalName)) {
+    return;
+  }
+
+  if (existsSync(filePath)) {
+    unlinkSync(filePath);
+  }
+  throw createHttpError(
+    400,
+    "ファイル内容が拡張子・形式と一致しません。",
+    "invalid_file_signature"
+  );
 };
 
 router.get("/", (req, res) => {
@@ -88,6 +104,7 @@ router.post("/", uploadImageFile, (req, res) => {
   if (!req.file) {
     throw createHttpError(400, "fileは必須です。");
   }
+  ensureValidUploadedImageFile(req.file.path, req.file.originalname);
 
   let createdImage;
   try {
@@ -139,6 +156,7 @@ router.patch("/:id", uploadImageFile, (req, res) => {
   let updatedImage;
   try {
     if (req.file) {
+      ensureValidUploadedImageFile(req.file.path, req.file.originalname);
       const updatePayload: Parameters<typeof updateImageWithHook>[1] = {
         storedPath: req.file.filename,
         originalName: req.file.originalname,

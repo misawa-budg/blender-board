@@ -17,6 +17,7 @@ import {
 } from "../utils/validators.js";
 import { createHttpError } from "../utils/httpError.js";
 import { deleteStoredFile, resolveStoredFilePath } from "../utils/storage.js";
+import { hasValidFileSignature } from "../utils/fileSignature.js";
 import type { Model } from "../types/entities.js";
 
 const router = Router();
@@ -43,6 +44,21 @@ const toModelListItemResponse = (model: Model): ModelListItemResponse => {
     fileSize: model.fileSize,
     downloadUrl: `/api/models/${model.id}/download`,
   };
+};
+
+const ensureValidUploadedModelFile = (filePath: string, originalName: string): void => {
+  if (hasValidFileSignature("models", filePath, originalName)) {
+    return;
+  }
+
+  if (existsSync(filePath)) {
+    unlinkSync(filePath);
+  }
+  throw createHttpError(
+    400,
+    "ファイル内容が拡張子・形式と一致しません。",
+    "invalid_file_signature"
+  );
 };
 
 router.get("/", (req, res) => {
@@ -88,6 +104,7 @@ router.post("/", uploadModelFile, (req, res) => {
   if (!req.file) {
     throw createHttpError(400, "fileは必須です。");
   }
+  ensureValidUploadedModelFile(req.file.path, req.file.originalname);
 
   let createdModel;
   try {
@@ -139,6 +156,7 @@ router.patch("/:id", uploadModelFile, (req, res) => {
   let updatedModel;
   try {
     if (req.file) {
+      ensureValidUploadedModelFile(req.file.path, req.file.originalname);
       const updatePayload: Parameters<typeof updateModelWithHook>[1] = {
         storedPath: req.file.filename,
         originalName: req.file.originalname,
