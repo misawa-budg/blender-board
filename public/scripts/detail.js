@@ -53,6 +53,8 @@ const editModelPickerOptionsElement = document.getElementById("edit-model-picker
 const editFileElement = document.getElementById("edit-file");
 const editPreviewFileFieldElement = document.getElementById("edit-preview-file-field");
 const editPreviewFileElement = document.getElementById("edit-preview-file");
+const editThumbnailFileFieldElement = document.getElementById("edit-thumbnail-file-field");
+const editThumbnailFileElement = document.getElementById("edit-thumbnail-file");
 const saveButtonElement = document.getElementById("save-button");
 const deleteButtonElement = document.getElementById("delete-button");
 
@@ -372,6 +374,9 @@ if (editModelIdsFieldElement instanceof HTMLElement) {
 if (editPreviewFileFieldElement instanceof HTMLElement) {
   editPreviewFileFieldElement.classList.toggle("hidden", kind !== "models");
 }
+if (editThumbnailFileFieldElement instanceof HTMLElement) {
+  editThumbnailFileFieldElement.classList.toggle("hidden", kind !== "models");
+}
 
 const closeDeleteConfirm = (confirmed) => {
   if (!(deleteConfirmOverlayElement instanceof HTMLElement) || deleteConfirmResolver === null) {
@@ -587,6 +592,9 @@ const loadItem = async () => {
     if (editPreviewFileElement instanceof HTMLInputElement) {
       editPreviewFileElement.value = "";
     }
+    if (editThumbnailFileElement instanceof HTMLInputElement) {
+      editThumbnailFileElement.value = "";
+    }
 
     if (detailCardElement instanceof HTMLElement) {
       detailCardElement.classList.remove("hidden");
@@ -624,6 +632,10 @@ if (
       editPreviewFileElement instanceof HTMLInputElement && editPreviewFileElement.files
         ? editPreviewFileElement.files[0]
         : undefined;
+    const replacementThumbnailFile =
+      editThumbnailFileElement instanceof HTMLInputElement && editThumbnailFileElement.files
+        ? editThumbnailFileElement.files[0]
+        : undefined;
 
     if (title === "") {
       showActionStatus("タイトルは必須です。", "error");
@@ -636,13 +648,19 @@ if (
 
     const hasReplacementFile = replacementFile instanceof File;
     const hasReplacementPreviewFile = replacementPreviewFile instanceof File;
+    const hasReplacementThumbnailFile = replacementThumbnailFile instanceof File;
     const isSameAsOriginal =
       originalItemState !== null &&
       title === originalItemState.title &&
       author === originalItemState.author &&
       modelIdsInput === originalItemState.modelIds;
 
-    if (isSameAsOriginal && !hasReplacementFile && !hasReplacementPreviewFile) {
+    if (
+      isSameAsOriginal &&
+      !hasReplacementFile &&
+      !hasReplacementPreviewFile &&
+      !hasReplacementThumbnailFile
+    ) {
       showActionStatus("変更内容がありません。", "error");
       return;
     }
@@ -658,6 +676,9 @@ if (
     }
     if (replacementPreviewFile && kind === "models") {
       formData.append("previewFile", replacementPreviewFile);
+    }
+    if (replacementThumbnailFile && kind === "models") {
+      formData.append("thumbnailFile", replacementThumbnailFile);
     }
 
     setActionPending(true);

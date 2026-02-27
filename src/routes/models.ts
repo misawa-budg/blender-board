@@ -34,6 +34,7 @@ type ModelListItemResponse = {
   mimeType: string;
   fileSize: number;
   previewUrl: string | null;
+  thumbnailUrl: string | null;
   downloadUrl: string;
 };
 
@@ -69,19 +70,22 @@ const resolveModelPreviewMimeType = (originalName: string, fallback: string): st
 type UploadedModelFiles = {
   sourceFile: Express.Multer.File | undefined;
   previewFile: Express.Multer.File | undefined;
+  thumbnailFile: Express.Multer.File | undefined;
 };
 
 const getUploadedModelFiles = (req: Request): UploadedModelFiles => {
   const filesValue = req.files;
   if (!filesValue || Array.isArray(filesValue)) {
-    return { sourceFile: undefined, previewFile: undefined };
+    return { sourceFile: undefined, previewFile: undefined, thumbnailFile: undefined };
   }
 
   const sourceFiles = filesValue.file;
   const previewFiles = filesValue.previewFile;
+  const thumbnailFiles = filesValue.thumbnailFile;
   return {
     sourceFile: Array.isArray(sourceFiles) ? sourceFiles[0] : undefined,
     previewFile: Array.isArray(previewFiles) ? previewFiles[0] : undefined,
+    thumbnailFile: Array.isArray(thumbnailFiles) ? thumbnailFiles[0] : undefined,
   };
 };
 
@@ -96,9 +100,11 @@ const deleteFileIfExists = (filePath: string | undefined): void => {
 
 const toModelListItemResponse = (model: Model): ModelListItemResponse => {
   const hasDedicatedPreview = typeof model.previewStoredPath === "string" && model.previewStoredPath !== "";
+  const hasThumbnail = typeof model.thumbnailStoredPath === "string" && model.thumbnailStoredPath !== "";
   const previewUrl = hasDedicatedPreview || isModelWebPreviewSupported(model.originalName)
     ? `/api/models/${model.id}/preview`
     : null;
+  const thumbnailUrl = hasThumbnail ? `/api/models/${model.id}/thumbnail` : null;
 
   return {
     id: model.id,
@@ -109,12 +115,17 @@ const toModelListItemResponse = (model: Model): ModelListItemResponse => {
     mimeType: model.mimeType,
     fileSize: model.fileSize,
     previewUrl,
+    thumbnailUrl,
     downloadUrl: `/api/models/${model.id}/download`,
   };
 };
 
-const ensureValidUploadedModelFile = (filePath: string, originalName: string): void => {
-  if (hasValidFileSignature("models", filePath, originalName)) {
+const ensureValidUploadedFile = (
+  kind: "models" | "images",
+  filePath: string,
+  originalName: string
+): void => {
+  if (hasValidFileSignature(kind, filePath, originalName)) {
     return;
   }
 
@@ -186,10 +197,11 @@ router.get("/:id", (req, res) => {
 });
 
 router.post("/", uploadModelFiles, (req, res) => {
-  const { sourceFile, previewFile } = getUploadedModelFiles(req);
+  const { sourceFile, previewFile, thumbnailFile } = getUploadedModelFiles(req);
   const cleanupUploadedFiles = (): void => {
     deleteFileIfExists(sourceFile?.path);
     deleteFileIfExists(previewFile?.path);
+    deleteFileIfExists(thumbnailFile?.path);
   };
 
   const validationResult = validateCreateMediaInput(req.body as unknown);
@@ -205,9 +217,12 @@ router.post("/", uploadModelFiles, (req, res) => {
 
   let createdModel;
   try {
-    ensureValidUploadedModelFile(sourceFile.path, sourceFile.originalname);
+    ensureValidUploadedFile("models", sourceFile.path, sourceFile.originalname);
     if (previewFile) {
-      ensureValidUploadedModelFile(previewFile.path, previewFile.originalname);
+      ensureValidUploadedFile("models", previewFile.path, previewFile.originalname);
+    }
+    if (thumbnailFile) {
+      ensureValidUploadedFile("images", thumbnailFile.path, thumbnailFile.originalname);
     }
 
     createdModel = createModel({
@@ -221,6 +236,10 @@ router.post("/", uploadModelFiles, (req, res) => {
       previewOriginalName: previewFile?.originalname ?? "",
       previewMimeType: previewFile?.mimetype ?? "",
       previewFileSize: previewFile?.size ?? 0,
+      thumbnailStoredPath: thumbnailFile?.filename ?? "",
+      thumbnailOriginalName: thumbnailFile?.originalname ?? "",
+      thumbnailMimeType: thumbnailFile?.mimetype ?? "",
+      thumbnailFileSize: thumbnailFile?.size ?? 0,
     });
   } catch (error) {
     cleanupUploadedFiles();
@@ -232,11 +251,12 @@ router.post("/", uploadModelFiles, (req, res) => {
 
 router.patch("/:id", uploadModelFiles, (req, res) => {
   const modelIdParam = req.params.id;
-  const { sourceFile, previewFile } = getUploadedModelFiles(req);
+  const { sourceFile, previewFile, thumbnailFile } = getUploadedModelFiles(req);
 
   if (typeof modelIdParam !== "string") {
     deleteFileIfExists(sourceFile?.path);
     deleteFileIfExists(previewFile?.path);
+    deleteFileIfExists(thumbnailFile?.path);
     throw createHttpError(400, "idは正の整数で指定してください。");
   }
 
@@ -244,26 +264,32 @@ router.patch("/:id", uploadModelFiles, (req, res) => {
   if (modelId === null) {
     deleteFileIfExists(sourceFile?.path);
     deleteFileIfExists(previewFile?.path);
+    deleteFileIfExists(thumbnailFile?.path);
     throw createHttpError(400, "idは正の整数で指定してください。");
   }
 
   const validationResult = validateUpdateMediaInput(req.body as unknown, {
-    requireAtLeastOne: sourceFile === undefined && previewFile === undefined,
+    requireAtLeastOne:
+      sourceFile === undefined && previewFile === undefined && thumbnailFile === undefined,
   });
   if (!validationResult.ok) {
     deleteFileIfExists(sourceFile?.path);
     deleteFileIfExists(previewFile?.path);
+    deleteFileIfExists(thumbnailFile?.path);
     throw createHttpError(400, validationResult.message);
   }
 
   let updatedModel;
   try {
-    if (sourceFile || previewFile) {
+    if (sourceFile || previewFile || thumbnailFile) {
       if (sourceFile) {
-        ensureValidUploadedModelFile(sourceFile.path, sourceFile.originalname);
+        ensureValidUploadedFile("models", sourceFile.path, sourceFile.originalname);
       }
       if (previewFile) {
-        ensureValidUploadedModelFile(previewFile.path, previewFile.originalname);
+        ensureValidUploadedFile("models", previewFile.path, previewFile.originalname);
+      }
+      if (thumbnailFile) {
+        ensureValidUploadedFile("images", thumbnailFile.path, thumbnailFile.originalname);
       }
       const updatePayload: Parameters<typeof updateModelWithHook>[1] = {
         ...(sourceFile
@@ -280,6 +306,14 @@ router.patch("/:id", uploadModelFiles, (req, res) => {
               previewOriginalName: previewFile.originalname,
               previewMimeType: previewFile.mimetype || "application/octet-stream",
               previewFileSize: previewFile.size,
+            }
+          : {}),
+        ...(thumbnailFile
+          ? {
+              thumbnailStoredPath: thumbnailFile.filename,
+              thumbnailOriginalName: thumbnailFile.originalname,
+              thumbnailMimeType: thumbnailFile.mimetype || "application/octet-stream",
+              thumbnailFileSize: thumbnailFile.size,
             }
           : {}),
       };
@@ -303,6 +337,12 @@ router.patch("/:id", uploadModelFiles, (req, res) => {
           ) {
             deleteStoredFile("models", previous.previewStoredPath, { ignoreMissing: true });
           }
+          if (
+            previous.thumbnailStoredPath &&
+            previous.thumbnailStoredPath !== current.thumbnailStoredPath
+          ) {
+            deleteStoredFile("models", previous.thumbnailStoredPath, { ignoreMissing: true });
+          }
         }
       );
     } else {
@@ -311,12 +351,14 @@ router.patch("/:id", uploadModelFiles, (req, res) => {
   } catch (error) {
     deleteFileIfExists(sourceFile?.path);
     deleteFileIfExists(previewFile?.path);
+    deleteFileIfExists(thumbnailFile?.path);
     throw error;
   }
 
   if (!updatedModel) {
     deleteFileIfExists(sourceFile?.path);
     deleteFileIfExists(previewFile?.path);
+    deleteFileIfExists(thumbnailFile?.path);
     throw createHttpError(404, "モデルが見つかりません。");
   }
 
@@ -333,6 +375,9 @@ router.delete("/:id", (req, res) => {
     deleteStoredFile("models", model.storedPath, { ignoreMissing: true });
     if (model.previewStoredPath) {
       deleteStoredFile("models", model.previewStoredPath, { ignoreMissing: true });
+    }
+    if (model.thumbnailStoredPath) {
+      deleteStoredFile("models", model.thumbnailStoredPath, { ignoreMissing: true });
     }
   });
   if (!deleted) {
@@ -395,6 +440,34 @@ router.get("/:id/preview", (req, res) => {
   }
 
   res.type(resolveModelPreviewMimeType(previewOriginalName, previewMimeType));
+  res.setHeader("Content-Disposition", "inline");
+  return res.sendFile(absoluteFilePath);
+});
+
+router.get("/:id/thumbnail", (req, res) => {
+  const modelId = parsePositiveInt(req.params.id);
+  if (modelId === null) {
+    throw createHttpError(400, "idは正の整数で指定してください。");
+  }
+
+  const model = findModelById(modelId);
+  if (!model) {
+    throw createHttpError(404, "モデルが見つかりません。");
+  }
+  if (!model.thumbnailStoredPath) {
+    throw createHttpError(404, "サムネイルが見つかりません。");
+  }
+
+  const absoluteFilePath = resolveStoredFilePath("models", model.thumbnailStoredPath);
+  if (!existsSync(absoluteFilePath)) {
+    throw createHttpError(404, "保存済みサムネイルファイルが見つかりません。");
+  }
+
+  const thumbnailMimeType =
+    model.thumbnailMimeType && model.thumbnailMimeType !== ""
+      ? model.thumbnailMimeType
+      : "application/octet-stream";
+  res.type(thumbnailMimeType);
   res.setHeader("Content-Disposition", "inline");
   return res.sendFile(absoluteFilePath);
 });

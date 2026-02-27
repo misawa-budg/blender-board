@@ -210,6 +210,11 @@ const openApiDocument = {
                     format: "binary",
                     description: "任意のWebプレビュー用glb/gltf",
                   },
+                  thumbnailFile: {
+                    type: "string",
+                    format: "binary",
+                    description: "任意のサムネイル画像（png/jpg/webp/gif）",
+                  },
                 },
               },
             },
@@ -270,6 +275,11 @@ const openApiDocument = {
                     format: "binary",
                     description: "任意のWebプレビュー用glb/gltf",
                   },
+                  thumbnailFile: {
+                    type: "string",
+                    format: "binary",
+                    description: "任意のサムネイル画像（png/jpg/webp/gif）",
+                  },
                 },
               },
             },
@@ -304,6 +314,23 @@ const openApiDocument = {
         },
       },
     },
+    "/api/models/{id}/thumbnail": {
+      get: {
+        summary: "モデルサムネイル画像",
+        parameters: [{ $ref: "#/components/parameters/IdParam" }],
+        responses: {
+          "200": { description: "OK" },
+          "404": {
+            description: "Not Found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
   },
   components: {
     parameters: {
@@ -326,6 +353,7 @@ const openApiDocument = {
           mimeType: { type: "string" },
           fileSize: { type: "integer" },
           previewUrl: { type: ["string", "null"] },
+          thumbnailUrl: { type: ["string", "null"] },
           downloadUrl: { type: "string" },
         },
       },

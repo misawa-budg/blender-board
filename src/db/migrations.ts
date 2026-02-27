@@ -129,11 +129,32 @@ const addModelPreviewAndLinkTablesMigration: Migration = {
   },
 };
 
+const addModelThumbnailColumnsMigration: Migration = {
+  id: "005_add_model_thumbnail_columns",
+  up: (db) => {
+    if (!hasColumn(db, "models", "thumbnail_stored_path")) {
+      db.prepare("ALTER TABLE models ADD COLUMN thumbnail_stored_path TEXT NOT NULL DEFAULT ''").run();
+    }
+    if (!hasColumn(db, "models", "thumbnail_original_name")) {
+      db.prepare("ALTER TABLE models ADD COLUMN thumbnail_original_name TEXT NOT NULL DEFAULT ''").run();
+    }
+    if (!hasColumn(db, "models", "thumbnail_mime_type")) {
+      db.prepare(
+        "ALTER TABLE models ADD COLUMN thumbnail_mime_type TEXT NOT NULL DEFAULT ''"
+      ).run();
+    }
+    if (!hasColumn(db, "models", "thumbnail_file_size")) {
+      db.prepare("ALTER TABLE models ADD COLUMN thumbnail_file_size INTEGER NOT NULL DEFAULT 0").run();
+    }
+  },
+};
+
 const migrations: Migration[] = [
   createMediaTablesMigration,
   addFileColumnsMigration,
   ensureLegacyFilenameColumnMigration,
   addModelPreviewAndLinkTablesMigration,
+  addModelThumbnailColumnsMigration,
 ];
 
 export const runMigrations = (db: Database.Database): void => {

@@ -13,6 +13,10 @@ export type CreateModelInput = {
   previewOriginalName?: string;
   previewMimeType?: string;
   previewFileSize?: number;
+  thumbnailStoredPath?: string;
+  thumbnailOriginalName?: string;
+  thumbnailMimeType?: string;
+  thumbnailFileSize?: number;
 };
 
 export type UpdateModelInput = {
@@ -26,6 +30,10 @@ export type UpdateModelInput = {
   previewOriginalName?: string;
   previewMimeType?: string;
   previewFileSize?: number;
+  thumbnailStoredPath?: string;
+  thumbnailOriginalName?: string;
+  thumbnailMimeType?: string;
+  thumbnailFileSize?: number;
 };
 
 export type ListModelsOptions = {
@@ -70,7 +78,14 @@ const MODEL_SELECT_SQL = `
     CASE
       WHEN preview_file_size > 0 THEN preview_file_size
       ELSE NULL
-    END AS previewFileSize
+    END AS previewFileSize,
+    NULLIF(thumbnail_stored_path, '') AS thumbnailStoredPath,
+    NULLIF(thumbnail_original_name, '') AS thumbnailOriginalName,
+    NULLIF(thumbnail_mime_type, '') AS thumbnailMimeType,
+    CASE
+      WHEN thumbnail_file_size > 0 THEN thumbnail_file_size
+      ELSE NULL
+    END AS thumbnailFileSize
   FROM models
 `;
 
@@ -154,9 +169,13 @@ export const createModel = (input: CreateModelInput): Model => {
         preview_stored_path,
         preview_original_name,
         preview_mime_type,
-        preview_file_size
+        preview_file_size,
+        thumbnail_stored_path,
+        thumbnail_original_name,
+        thumbnail_mime_type,
+        thumbnail_file_size
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
     )
     .run(
@@ -171,7 +190,11 @@ export const createModel = (input: CreateModelInput): Model => {
       input.previewStoredPath ?? "",
       input.previewOriginalName ?? "",
       input.previewMimeType ?? "",
-      input.previewFileSize ?? 0
+      input.previewFileSize ?? 0,
+      input.thumbnailStoredPath ?? "",
+      input.thumbnailOriginalName ?? "",
+      input.thumbnailMimeType ?? "",
+      input.thumbnailFileSize ?? 0
     );
 
   const modelId = Number(insertResult.lastInsertRowid);
@@ -231,6 +254,22 @@ const updateModelInTransaction = (id: number, input: UpdateModelInput): Model | 
   if (input.previewFileSize !== undefined) {
     fields.push("preview_file_size = ?");
     values.push(input.previewFileSize);
+  }
+  if (input.thumbnailStoredPath !== undefined) {
+    fields.push("thumbnail_stored_path = ?");
+    values.push(input.thumbnailStoredPath);
+  }
+  if (input.thumbnailOriginalName !== undefined) {
+    fields.push("thumbnail_original_name = ?");
+    values.push(input.thumbnailOriginalName);
+  }
+  if (input.thumbnailMimeType !== undefined) {
+    fields.push("thumbnail_mime_type = ?");
+    values.push(input.thumbnailMimeType);
+  }
+  if (input.thumbnailFileSize !== undefined) {
+    fields.push("thumbnail_file_size = ?");
+    values.push(input.thumbnailFileSize);
   }
 
   if (fields.length === 0) {

@@ -29,6 +29,12 @@ const modelPreviewUploadRule: UploadRule = {
   maxFileSize: 200 * 1024 * 1024,
 };
 
+const modelThumbnailUploadRule: UploadRule = {
+  kind: "models",
+  allowedExtensions: imageUploadRule.allowedExtensions,
+  maxFileSize: imageUploadRule.maxFileSize,
+};
+
 const createUploader = (rule: UploadRule) => {
   ensureUploadDirectories();
 
@@ -94,6 +100,20 @@ const modelFileFilter = (_req: Request, file: Express.Multer.File, callback: mul
     return;
   }
 
+  if (file.fieldname === "thumbnailFile") {
+    if (modelThumbnailUploadRule.allowedExtensions.includes(extension)) {
+      callback(null, true);
+      return;
+    }
+    callback(
+      createHttpError(
+        400,
+        `thumbnailFileは画像形式のみ対応です: ${extension || "(拡張子なし)"}`
+      )
+    );
+    return;
+  }
+
   callback(createHttpError(400, `未対応のアップロード項目です: ${file.fieldname}`));
 };
 
@@ -111,9 +131,10 @@ export const uploadModelFiles = multer({
   fileFilter: modelFileFilter,
   limits: {
     fileSize: modelUploadRule.maxFileSize,
-    files: 2,
+    files: 3,
   },
 }).fields([
   { name: "file", maxCount: 1 },
   { name: "previewFile", maxCount: 1 },
+  { name: "thumbnailFile", maxCount: 1 },
 ]);

@@ -323,6 +323,42 @@ test("モデル投稿時にpreviewFileを任意添付でき、previewAPIで返�
   assert.match(String(preview.headers["content-type"] ?? ""), /model\/gltf-binary/);
 });
 
+test("モデル投稿時にサムネイル画像を任意添付でき、一覧と詳細で参照できる", async () => {
+  const modelSourcePath = createTempFile(
+    "thumbnail-source.blend",
+    Buffer.concat([blendSignature, Buffer.from("SOURCE")])
+  );
+  const thumbnailImagePath = createTempFile(
+    "thumbnail-image.png",
+    Buffer.concat([pngSignature, Buffer.from("THUMBNAIL")])
+  );
+
+  const created = await api
+    .post("/api/models")
+    .field("title", "thumbnail-model")
+    .field("author", "tester")
+    .attach("file", modelSourcePath)
+    .attach("thumbnailFile", thumbnailImagePath);
+  assert.equal(created.status, 201);
+  assert.equal(created.body.item.previewUrl, null);
+  assert.equal(typeof created.body.item.thumbnailUrl, "string");
+
+  const modelId = Number(created.body.item.id);
+
+  const list = await api.get("/api/models?q=thumbnail-model&limit=1&page=1");
+  assert.equal(list.status, 200);
+  assert.ok(Array.isArray(list.body.items));
+  assert.equal(typeof list.body.items[0].thumbnailUrl, "string");
+
+  const detail = await api.get(`/api/models/${modelId}`);
+  assert.equal(detail.status, 200);
+  assert.equal(typeof detail.body.item.thumbnailUrl, "string");
+
+  const thumbnail = await api.get(`/api/models/${modelId}/thumbnail`);
+  assert.equal(thumbnail.status, 200);
+  assert.match(String(thumbnail.headers["content-type"] ?? ""), /image\/png/);
+});
+
 test.after(() => {
   rmSync(testRootPath, { recursive: true, force: true });
 });

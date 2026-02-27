@@ -14,5 +14,9 @@ export type Model = MediaEntity & {
   previewOriginalName: string | null;
   previewMimeType: string | null;
   previewFileSize: number | null;
+  thumbnailStoredPath: string | null;
+  thumbnailOriginalName: string | null;
+  thumbnailMimeType: string | null;
+  thumbnailFileSize: number | null;
 };
 export type Image = MediaEntity;

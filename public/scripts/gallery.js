@@ -173,6 +173,12 @@ const renderCard = (item) => {
           ></model-viewer>
         </div>
       `;
+    } else if (typeof item.thumbnailUrl === "string" && item.thumbnailUrl !== "") {
+      previewHtml = `
+        <div class="card-preview">
+          <img class="card-preview-image" src="${item.thumbnailUrl}" alt="${escapeHtml(item.title)} のサムネイル" loading="lazy" decoding="async" />
+        </div>
+      `;
     } else {
       previewHtml = `
         <div class="card-preview card-preview-unsupported">
