@@ -19,6 +19,7 @@ const detailStatusElement = document.getElementById("detail-status");
 const actionStatusElement = document.getElementById("action-status");
 const detailCardElement = document.getElementById("detail-card");
 const detailPreviewElement = document.getElementById("detail-preview");
+const detailPreviewKindElement = document.getElementById("detail-preview-kind");
 const detailPreviewImageElement = document.getElementById("detail-preview-image");
 const detailPreviewModelElement = document.getElementById("detail-preview-model");
 const detailPreviewNoteElement = document.getElementById("detail-preview-note");
@@ -464,6 +465,7 @@ const renderRelatedImages = (relatedImages) => {
 const renderPreview = (item) => {
   if (
     !(detailPreviewElement instanceof HTMLElement) ||
+    !(detailPreviewKindElement instanceof HTMLElement) ||
     !(detailPreviewImageElement instanceof HTMLImageElement) ||
     !(detailPreviewModelElement instanceof HTMLElement) ||
     !(detailPreviewNoteElement instanceof HTMLElement)
@@ -474,6 +476,9 @@ const renderPreview = (item) => {
   detailPreviewImageElement.classList.add("hidden");
   detailPreviewModelElement.classList.add("hidden");
   detailPreviewNoteElement.classList.add("hidden");
+  detailPreviewKindElement.classList.add("hidden");
+  detailPreviewKindElement.classList.remove("is-interactive", "is-static");
+  detailPreviewKindElement.textContent = "";
   detailPreviewImageElement.src = "";
   detailPreviewModelElement.setAttribute("src", "");
   detailPreviewNoteElement.textContent = "";
@@ -489,8 +494,19 @@ const renderPreview = (item) => {
 
   if (kind === "models") {
     if (canRenderModelPreview(item)) {
+      detailPreviewKindElement.textContent = "3Dプレビュー（ドラッグ/ズームで操作できます）";
+      detailPreviewKindElement.classList.remove("hidden");
+      detailPreviewKindElement.classList.add("is-interactive");
       detailPreviewModelElement.setAttribute("src", withCacheBust(item.previewUrl));
       detailPreviewModelElement.classList.remove("hidden");
+    } else if (typeof item.thumbnailUrl === "string" && item.thumbnailUrl !== "") {
+      detailPreviewKindElement.textContent = "サムネイル画像（3D操作はできません）";
+      detailPreviewKindElement.classList.remove("hidden");
+      detailPreviewKindElement.classList.add("is-static");
+      detailPreviewImageElement.src = withCacheBust(item.thumbnailUrl);
+      detailPreviewImageElement.alt =
+        typeof item.title === "string" ? `${item.title} のサムネイル` : "モデルサムネイル";
+      detailPreviewImageElement.classList.remove("hidden");
     } else {
       detailPreviewNoteElement.textContent =
         "この形式はWebプレビュー未対応です。glb/gltfで投稿すると3D表示できます。";
